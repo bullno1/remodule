@@ -1,0 +1,8 @@
+---
+CompileFlags:
+  Add: [-xc, -Wall, -Werror, -pedantic, -std=c11]
+---
+If:
+  PathMatch: remodule\.h
+CompileFlags:
+  Add: [-DREMODULE_PLUGIN_IMPLEMENTATION, -DREMODULE_HOST_IMPLEMENTATION]
