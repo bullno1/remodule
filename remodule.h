@@ -50,6 +50,14 @@
 	} while(0)
 #endif
 
+#if defined(_MSC_VER)
+#	define REMODULE_DYNLIB_EXT ".dll"
+#elif defined(__APPLE__)
+#	define REMODULE_DYNLIB_EXT ".dylib"
+#elif defined(__unix__)
+#	define REMODULE_DYNLIB_EXT ".so"
+#endif
+
 typedef struct remodule_s remodule_t;
 typedef struct remodule_var_info_s remodule_var_info_t;
 
@@ -82,7 +90,8 @@ remodule_unload(remodule_t* mod);
 
 #define REMODULE_INFO_SYMBOL remodule__plugin_info
 #define REMODULE_INFO_SYMBOL_STR REMODULE_STRINGIFY(REMODULE_INFO_SYMBOL)
-#define REMODULE_STRINGIFY(X) #X
+#define REMODULE_STRINGIFY(X) REMODULE_STRINGIFY2(X)
+#define REMODULE_STRINGIFY2(X) #X
 
 typedef struct remodule_plugin_info_s {
 	const remodule_var_info_t* const* var_info_begin;
@@ -207,13 +216,10 @@ struct remodule_s {
 remodule_t*
 remodule_load(const char* path, void* userdata) {
 	remodule_dynlib_t lib = remodule_dynlib_open(path);
-	if (lib == NULL) { return NULL; }
+	REMODULE_ASSERT(lib != NULL, "Could not load library");
 
 	remodule_info_fn_t info_fn = (remodule_info_fn_t)remodule_dynlib_find(lib, REMODULE_INFO_SYMBOL_STR);
-	if (info_fn == NULL) {
-		remodule_dynlib_close(lib);
-		return NULL;
-	}
+	REMODULE_ASSERT(info_fn != NULL, "Module does not export info function");
 
 	remodule_plugin_info_t plugin_info = info_fn();
 	plugin_info.entry(REMODULE_OP_LOAD, userdata);
@@ -304,7 +310,7 @@ remodule_reload(remodule_t* mod) {
 			if (
 				storage->name_length == var_info.name_length
 				&& storage->value_size == var_info.value_size
-				&& memcmp(storage->name, var_info.name, storage->name_length)
+				&& memcmp(storage->name, var_info.name, storage->name_length) == 0
 			) {
 				memcpy(var_info.value_addr, storage->value, storage->value_size);
 				break;
