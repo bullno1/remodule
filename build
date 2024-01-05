@@ -1,0 +1,18 @@
+#!/bin/sh -ex
+
+cc \
+	-O3 \
+	-fsanitize=undefined,address \
+	-fPIC \
+	-shared \
+	-fvisibility=hidden \
+	-Wl,--exclude-libs,ALL \
+	-Wl,--no-whole-archive \
+	-o plugin.so \
+	example_plugin.c
+
+cc \
+	-O3 \
+	-fsanitize=undefined,address \
+	-o host \
+	example_host.c
