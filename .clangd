@@ -6,3 +6,8 @@ If:
   PathMatch: remodule\.h
 CompileFlags:
   Add: [-DREMODULE_PLUGIN_IMPLEMENTATION, -DREMODULE_HOST_IMPLEMENTATION]
+---
+If:
+  PathMatch: remodule_monitor\.h
+CompileFlags:
+  Add: [-DREMODULE_MONITOR_IMPLEMENTATION]

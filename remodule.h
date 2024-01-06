@@ -50,11 +50,11 @@
 	} while(0)
 #endif
 
-#if defined(_MSC_VER)
+#if defined(_WIN32)
 #	define REMODULE_DYNLIB_EXT ".dll"
 #elif defined(__APPLE__)
 #	define REMODULE_DYNLIB_EXT ".dylib"
-#elif defined(__unix__)
+#elif defined(__linux__)
 #	define REMODULE_DYNLIB_EXT ".so"
 #endif
 
@@ -84,9 +84,13 @@ remodule_reload(remodule_t* mod);
 void
 remodule_unload(remodule_t* mod);
 
+const char*
+remodule_path(remodule_t* mod);
+
 #endif
 
-#if defined(REMODULE_PLUGIN_IMPLEMENTATION) || defined(REMODULE_HOST_IMPLEMENTATION)
+#if (defined(REMODULE_PLUGIN_IMPLEMENTATION) || defined(REMODULE_HOST_IMPLEMENTATION)) && !defined(REMODULE_INTERNAL)
+#define REMODULE_INTERNAL
 
 #define REMODULE_INFO_SYMBOL remodule__plugin_info
 #define REMODULE_INFO_SYMBOL_STR REMODULE_STRINGIFY(REMODULE_INFO_SYMBOL)
@@ -103,7 +107,7 @@ typedef struct remodule_plugin_info_s {
 
 #ifdef REMODULE_PLUGIN_IMPLEMENTATION
 
-#if defined(_MSC_VER)
+#if defined(_WIN32)
 #	define REMODULE_EXPORT __declspec(dllexport)
 #else
 #	define REMODULE_EXPORT __attribute__((visibility("default")))
@@ -136,23 +140,21 @@ __attribute__((used, section("remodule"))) const remodule_var_info_t* const remo
 void
 remodule_entry(remodule_op_t op, void* userdata);
 
-REMODULE_EXPORT remodule_plugin_info_t
-REMODULE_INFO_SYMBOL(void) {
-	return (remodule_plugin_info_t){
-		.entry = &remodule_entry,
-		.var_info_begin = REMODULE_VAR_INFO_BEGIN,
-		.var_info_end = REMODULE_VAR_INFO_END,
-	};
-}
+REMODULE_EXPORT remodule_plugin_info_t REMODULE_INFO_SYMBOL = {
+	.entry = &remodule_entry,
+	.var_info_begin = REMODULE_VAR_INFO_BEGIN,
+	.var_info_end = REMODULE_VAR_INFO_END,
+};
 
 #endif
 
-#ifdef REMODULE_HOST_IMPLEMENTATION
+#if defined(REMODULE_HOST_IMPLEMENTATION) && !defined(REMODULE_HOST_IMPLEMENTATION_GUARD)
+#define REMODULE_HOST_IMPLEMENTATION_GUARD
 
 #include <stdlib.h>
 #include <string.h>
 
-#if defined(_MSC_VER)
+#if defined(_WIN32)
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -197,8 +199,6 @@ remodule_dynlib_close(remodule_dynlib_t lib) {
 
 #endif
 
-typedef remodule_plugin_info_t(*remodule_info_fn_t)(void);
-
 typedef struct remodule_tmp_var_storage_s {
 	char* name;
 	void* value;
@@ -218,17 +218,16 @@ remodule_load(const char* path, void* userdata) {
 	remodule_dynlib_t lib = remodule_dynlib_open(path);
 	REMODULE_ASSERT(lib != NULL, "Could not load library");
 
-	remodule_info_fn_t info_fn = (remodule_info_fn_t)remodule_dynlib_find(lib, REMODULE_INFO_SYMBOL_STR);
-	REMODULE_ASSERT(info_fn != NULL, "Module does not export info function");
+	remodule_plugin_info_t* info = remodule_dynlib_find(lib, REMODULE_INFO_SYMBOL_STR);
+	REMODULE_ASSERT(info != NULL, "Module does not export info struct");
 
-	remodule_plugin_info_t plugin_info = info_fn();
-	plugin_info.entry(REMODULE_OP_LOAD, userdata);
+	info->entry(REMODULE_OP_LOAD, userdata);
 
 	remodule_t* mod = malloc(sizeof(remodule_t));
 	*mod = (remodule_t){
 		.path = path,
 		.userdata = userdata,
-		.info = plugin_info,
+		.info = *info,
 		.lib = lib,
 	};
 	return mod;
@@ -289,9 +288,9 @@ remodule_reload(remodule_t* mod) {
 	mod->lib = remodule_dynlib_open(mod->path);
 	REMODULE_ASSERT(mod->lib != NULL, "Failed to reload");
 
-	remodule_info_fn_t info_fn = (remodule_info_fn_t)remodule_dynlib_find(mod->lib, REMODULE_INFO_SYMBOL_STR);
-	REMODULE_ASSERT(info_fn != NULL, "Module does not export info function");
-	mod->info = info_fn();
+	remodule_plugin_info_t* info = remodule_dynlib_find(mod->lib, REMODULE_INFO_SYMBOL_STR);
+	REMODULE_ASSERT(info != NULL, "Module does not export info struct");
+	mod->info = *info;
 
 	// Copy vars back in
 	remodule_tmp_var_storage_t* tmp_storage = (remodule_tmp_var_storage_t*)tmp_buf;
@@ -327,6 +326,11 @@ remodule_unload(remodule_t* mod) {
 	mod->info.entry(REMODULE_OP_UNLOAD, mod->userdata);
 	remodule_dynlib_close(mod->lib);
 	free(mod);
+}
+
+const char*
+remodule_path(remodule_t* mod) {
+	return mod->path;
 }
 
 #endif

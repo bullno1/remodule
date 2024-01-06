@@ -1,18 +1,23 @@
 #define REMODULE_HOST_IMPLEMENTATION
+#define REMODULE_MONITOR_IMPLEMENTATION
+#include "remodule_monitor.h"
+#include "remodule.h"
 #include <stdio.h>
 #include <strings.h>
 #include <stdbool.h>
-#include "remodule.h"
 #include "example_shared.h"
 
 int
 main(int argc, const char* argv[]) {
 	plugin_interface interface;
 	remodule_t* mod = remodule_load(argv[1], &interface);
+	remodule_monitor_t* mon = remodule_monitor(mod);
 
 	char line[1024];
 	while (true) {
 		if (fgets(line, sizeof(line), stdin) == NULL) { break; }
+
+		remodule_check(mon);
 
 		if (strcmp(line, "up\n") == 0) {
 			interface.up();
@@ -27,6 +32,7 @@ main(int argc, const char* argv[]) {
 		}
 	}
 
+	remodule_unmonitor(mon);
 	remodule_unload(mod);
 
 	return 0;

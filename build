@@ -3,6 +3,7 @@
 cc \
 	-O3 \
 	-fsanitize=undefined,address \
+	-std=c11 -Wextra -Werror -pedantic \
 	-fPIC \
 	-shared \
 	-fvisibility=hidden \
@@ -13,6 +14,7 @@ cc \
 
 cc \
 	-O3 \
+	-std=c11 -Wextra -Werror -pedantic \
 	-fsanitize=undefined,address \
 	-o host \
 	example_host.c
