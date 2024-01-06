@@ -15,8 +15,10 @@
 
 int
 main(int argc, const char* argv[]) {
-	plugin_interface interface;
-	remodule_t* mod = remodule_load(argv[1], &interface);
+	//! [Load plugin]
+	plugin_interface interface;  // This will be passed verbatim to the plugin
+	remodule_t* mod = remodule_load("./plugin" REMODULE_DYNLIB_EXT, &interface);
+	//! [Load plugin]
 	remodule_monitor_t* mon = remodule_monitor(mod);
 
 	char line[1024];

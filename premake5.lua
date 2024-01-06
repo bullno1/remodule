@@ -19,12 +19,6 @@ workspace "remodule"
 
   debugdir "bin/%{cfg.buildcfg}"
 
-  filter { "system:windows" }
-    debugargs { "plugin.dll" }
-
-  filter { "system:linux" }
-    debugargs { "./plugin.so" }
-
 project "host"
   kind "ConsoleApp"
   language "C"

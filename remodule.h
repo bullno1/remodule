@@ -11,11 +11,9 @@
  * Likewise, in **exactly one** source file of every plugin, define `REMODULE_PLUGIN_IMPLEMENTATION` before including remodule.h:
  * @snippet example_plugin.c Plugin include
  *
- * A plugin must define an @link remodule_entry entrypoint @endlink:
- * @snippet example_plugin.c Plugin entrypoint
+ * A plugin must define an @link remodule_entry entrypoint @endlink.
  *
- * If the plugin has any global state that needs to be preserved across reloads, mark those with @link REMODULE_VAR @endlink:
- * @snippet example_plugin.c State transfer
+ * If a plugin has any global state that needs to be preserved across reloads, mark those with @link REMODULE_VAR @endlink.
  */
 
 #if defined(__linux__) && !defined(_GNU_SOURCE)
@@ -42,6 +40,30 @@
  *
  * @param TYPE the type of the variable.
  * @param NAME the name of the variable.
+ *   This must be unique within each plugin.
+ *
+ * @remarks
+ *   If the type of the variable changes between reloads, it will not be preserved.
+ *   The new instance will have the variable at its initial value.
+ *
+ * @remarks
+ *   Only a shallow copy will be made using `memcpy` to migrate data from the old
+ *   plugin instance to the new one.
+ *
+ * @remarks
+ *   As long as the plugin uses the host's allocator or its allocator's state
+ *   is preserved, everything should work out
+ *   of the box.
+ *
+ * @remarks
+ *   On the other hand, pointers to static data in the plugin or structures
+ *   allocated using the plugin's private allocator are problematic.
+ *
+ * @remarks
+ *   For more complex cases, make use of
+ *   @link REMODULE_OP_BEFORE_RELOAD @endlink and
+ *   @link REMODULE_OP_AFTER_RELOAD @endlink to serialize and deserialize.
+ *   The target for serialization could be the `userdata` pointer in @link remodule_entry @endlink.
  */
 #define REMODULE_VAR(TYPE, NAME) \
 	extern TYPE NAME; \
@@ -153,6 +175,14 @@ struct remodule_var_info_s {
  *   the module.
  *
  * @return The reloadable module.
+ *
+ * @remarks
+ *   On Windows, due to file locking, instead of loading the module directly,
+ *   a temporary copy will be made.
+ *   This will be loaded instead of the original module.
+ *   Therefore, the directory containing the module must be writable.
+ * @remarks
+ *   The temporary file will be deleted once it's no longer needed.
  */
 REMODULE_API remodule_t*
 remodule_load(const char* path, void* userdata);
@@ -188,6 +218,7 @@ remodule_path(remodule_t* mod);
  *
  * @param op The operation currently being executed.
  * @param userdata The userdata passed from the host in @link remodule_load @endlink.
+ *   This always points to the same object between reloads.
  */
 REMODULE_API void
 remodule_entry(remodule_op_t op, void* userdata);
