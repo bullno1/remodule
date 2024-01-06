@@ -56,7 +56,7 @@ typedef struct remodule_dirmon_s {
 #elif defined(_WIN32)
 	HANDLE dir_handle;
 	OVERLAPPED overlapped;
-	char _Alignas(FILE_NOTIFY_INFORMATION) notification_buf[sizeof(FILE_NOTIFY_INFORMATION) + MAX_PATH];
+	_Alignas(FILE_NOTIFY_INFORMATION) char notification_buf[sizeof(FILE_NOTIFY_INFORMATION) + MAX_PATH];
 #endif
 	char path[];
 } remodule_dirmon_t;
@@ -162,8 +162,7 @@ remodule_dirmon_release(remodule_dirmon_t* dirmon) {
 
 static void
 remodule_dirmon_update_all(void) {
-	char _Alignas(struct inotify_event) event_buf[sizeof(struct inotify_event) + NAME_MAX + 1];
-	bool has_update = false;
+	_Alignas(struct inotify_event) char event_buf[sizeof(struct inotify_event) + NAME_MAX + 1];
 
 	while (true) {
 		ssize_t num_bytes_read = read(remodule_dirmon_root.inotifyfd, event_buf, sizeof(event_buf));
@@ -171,8 +170,6 @@ remodule_dirmon_update_all(void) {
 		if (num_bytes_read <= 0) {
 			break;
 		}
-
-		has_update = true;
 
 		for (
 			char* event_itr = event_buf;
@@ -196,9 +193,7 @@ remodule_dirmon_update_all(void) {
 		}
 	}
 
-	if (has_update) {
-		++remodule_dirmon_root.version;
-	}
+	++remodule_dirmon_root.version;
 }
 
 #elif defined(_WIN32)
@@ -250,7 +245,7 @@ remodule_dirmon_acquire(const char* path) {
 
 	dirmon->dir_handle = CreateFileA(
 		name_buf,
-		0,
+		FILE_LIST_DIRECTORY,
 		FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE,
 		NULL,
 		OPEN_EXISTING,
@@ -264,15 +259,18 @@ remodule_dirmon_acquire(const char* path) {
 		"Could not associate directory to IOCP"
 	);
 
-	ReadDirectoryChangesW(
-		dirmon->dir_handle,
-		dirmon->notification_buf,
-		sizeof(dirmon->notification_buf),
-		FALSE,
-		FILE_NOTIFY_CHANGE_FILE_NAME | FILE_NOTIFY_CHANGE_LAST_WRITE | FILE_NOTIFY_CHANGE_CREATION,
-		NULL,
-		&dirmon->overlapped,
-		NULL
+	REMODULE_ASSERT(
+		ReadDirectoryChangesW(
+			dirmon->dir_handle,
+			dirmon->notification_buf,
+			sizeof(dirmon->notification_buf),
+			FALSE,
+			FILE_NOTIFY_CHANGE_FILE_NAME | FILE_NOTIFY_CHANGE_LAST_WRITE | FILE_NOTIFY_CHANGE_CREATION,
+			NULL,
+			&dirmon->overlapped,
+			NULL
+		),
+		"ReadDirectoryChangesW failed"
 	);
 
 	return dirmon;
@@ -299,11 +297,8 @@ remodule_dirmon_update_all(void) {
 	DWORD num_bytes;
 	ULONG_PTR key;
 	OVERLAPPED* overlapped;
-	bool has_update = false;
 
 	while (GetQueuedCompletionStatus(remodule_dirmon_root.iocp, &num_bytes, &key, &overlapped, 0)) {
-		has_update = true;
-
 		for (
 			remodule_dirmon_link_t* itr = remodule_dirmon_root.link.next;
 			itr != &remodule_dirmon_root.link;
@@ -313,14 +308,27 @@ remodule_dirmon_update_all(void) {
 
 			if (&dirmon->overlapped == overlapped) {
 				++dirmon->version;
+
+				// Queue another read
+				REMODULE_ASSERT(
+					ReadDirectoryChangesW(
+						dirmon->dir_handle,
+						dirmon->notification_buf,
+						sizeof(dirmon->notification_buf),
+						FALSE,
+						FILE_NOTIFY_CHANGE_FILE_NAME | FILE_NOTIFY_CHANGE_LAST_WRITE | FILE_NOTIFY_CHANGE_CREATION,
+						NULL,
+						&dirmon->overlapped,
+						NULL
+					),
+					"ReadDirectoryChangesW failed"
+				);
 				break;
 			}
 		}
 	}
 
-	if (has_update) {
-		++remodule_dirmon_root.version;
-	}
+	++remodule_dirmon_root.version;
 }
 
 #else
@@ -401,22 +409,23 @@ remodule_check(remodule_monitor_t* mon) {
 		NULL
 	);
 
-	FILETIME last_modified;
-	if (
-		file != INVALID_HANDLE_VALUE
-		&& GetFileTime(file, NULL, NULL, &last_modified)
-		&& (
-			mon->last_modified.dwHighDateTime < last_modified.dwHighDateTime
-			|| (
-				mon->last_modified.dwHighDateTime == last_modified.dwHighDateTime
-				&& mon->last_modified.dwLowDateTime < last_modified.dwLowDateTime
+	if (file != INVALID_HANDLE_VALUE) {
+		FILETIME last_modified;
+		if (
+			GetFileTime(file, NULL, NULL, &last_modified)
+			&& (
+				mon->last_modified.dwHighDateTime < last_modified.dwHighDateTime
+				|| (
+					mon->last_modified.dwHighDateTime == last_modified.dwHighDateTime
+					&& mon->last_modified.dwLowDateTime < last_modified.dwLowDateTime
+				)
 			)
-		)
-	) {
-		mon->last_modified = last_modified;
-		CloseHandle(file);
+		) {
+			mon->last_modified = last_modified;
+			remodule_reload(mon->mod);
+		}
 
-		remodule_reload(mon->mod);
+		CloseHandle(file);
 	}
 #endif
 }
