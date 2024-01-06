@@ -54,10 +54,14 @@
 #define REMODULE_ASSERT(COND, MSG) \
 	do { \
 		if (!(COND)) { \
-			fprintf(stderr, "%s:%d: %s\n", __FILE__, __LINE__, MSG); \
+			fprintf(stderr, "%s:%d: %s (%s)\n", __FILE__, __LINE__, MSG, remodule_last_error()); \
 			abort(); \
 		} \
 	} while(0)
+
+REMODULE_API const char*
+remodule_last_error(void);
+
 #endif
 
 #if defined(_WIN32)
@@ -166,14 +170,31 @@ REMODULE_EXPORT remodule_plugin_info_t REMODULE_INFO_SYMBOL = {
 
 #if defined(_WIN32)
 
+#ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
+#endif
 #include <windows.h>
 
 typedef HMODULE remodule_dynlib_t;
 
 static remodule_dynlib_t
 remodule_dynlib_open(const char* path) {
-	return LoadLibraryA(path);
+	char dir_buf[MAX_PATH];
+	char name_buf[MAX_PATH];
+	char tmp_name_buf[MAX_PATH];
+	char* file_part;
+
+	// Create a temporary file name
+	GetFullPathNameA(path, sizeof(dir_buf), dir_buf, &file_part);
+	size_t name_len = strlen(file_part);
+	memcpy(name_buf, file_part, name_len);
+	*file_part = '\0';
+	GetTempFileNameA(dir_buf, name_buf, 0, tmp_name_buf);
+
+	// Copy the file over
+	REMODULE_ASSERT(CopyFileA(path, tmp_name_buf, FALSE), "Could not create temporary file");
+
+	return LoadLibraryA(tmp_name_buf);
 }
 
 static void*
@@ -183,7 +204,27 @@ remodule_dynlib_find(remodule_dynlib_t lib, const char* name) {
 
 static void
 remodule_dynlib_close(remodule_dynlib_t lib) {
+	char name_buf[MAX_PATH];
+	REMODULE_ASSERT(GetModuleFileNameA(lib, name_buf, sizeof(name_buf)) > 0, "Could not get module name");
+
 	FreeLibrary(lib);
+	DeleteFileA(name_buf);
+}
+
+static char remodule_error_msg_buf[2048];
+
+const char*
+remodule_last_error(void) {
+	FormatMessageA(
+		FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+		NULL,
+		GetLastError(),
+		MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+		remodule_error_msg_buf,
+		sizeof(remodule_error_msg_buf),
+		NULL
+	);
+	return remodule_error_msg_buf;
 }
 
 #elif defined(__unix__) || defined(__APPLE__)
@@ -205,6 +246,11 @@ remodule_dynlib_find(remodule_dynlib_t lib, const char* name) {
 static void
 remodule_dynlib_close(remodule_dynlib_t lib) {
 	dlclose(lib);
+}
+
+const char*
+remodule_last_error(void) {
+	return strerror(errno);
 }
 
 #endif
