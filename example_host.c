@@ -9,36 +9,32 @@
 //! [Include remodule]
 
 #include <stdio.h>
-#include <string.h>
-#include <stdbool.h>
 #include "example_shared.h"
+
+static bool should_run = true;
+
+static void
+request_exit(void) {
+	should_run = false;
+}
 
 int
 main(int argc, const char* argv[]) {
 	//! [Load plugin]
-	plugin_interface interface;  // This will be passed verbatim to the plugin
+	// This will be passed verbatim to the plugin
+	plugin_interface_t interface = {
+		// Something the plugin can call to communicate with the host
+		.request_exit = request_exit,
+	};
 	remodule_t* mod = remodule_load("./plugin" REMODULE_DYNLIB_EXT, &interface);
 	//! [Load plugin]
 	remodule_monitor_t* mon = remodule_monitor(mod);
 
-	char line[1024];
-	while (true) {
-		if (fgets(line, sizeof(line), stdin) == NULL) { break; }
+	while (should_run) {
+		interface.update(interface.plugin_data);
 
 		if (remodule_check(mon)) {
 			fprintf(stderr, "Reloaded %s\n", remodule_path(mod));
-		}
-
-		if (strcmp(line, "up\n") == 0) {
-			interface.up();
-		} else if (strcmp(line, "down\n") == 0) {
-			interface.down();
-		} else if (strcmp(line, "show\n") == 0) {
-			interface.show();
-		} else if (strcmp(line, "reload\n") == 0) {
-			remodule_reload(mod);
-		} else {
-			fprintf(stderr, "Invalid command: %s", line);
 		}
 	}
 
