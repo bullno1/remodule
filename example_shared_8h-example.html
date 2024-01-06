@@ -69,15 +69,14 @@ $(function() {
 <div class="fragment"><div class="line"><span class="preprocessor">#ifndef EXAMPLE_SHARED_H</span></div>
 <div class="line"><span class="preprocessor">#define EXAMPLE_SHARED_H</span></div>
 <div class="line"> </div>
-<div class="line"><span class="comment">// A command callback</span></div>
-<div class="line"><span class="keyword">typedef</span> void(*cmd)(void);</div>
+<div class="line"><span class="keyword">typedef</span> <span class="keyword">struct </span>plugin_interface_s {</div>
+<div class="line">    <span class="comment">// Ask the host to exit</span></div>
+<div class="line">    void(*request_exit)(void);</div>
 <div class="line"> </div>
-<div class="line"><span class="comment">// The plugin is responsible for filling these on load.</span></div>
-<div class="line"><span class="keyword">typedef</span> <span class="keyword">struct </span>{</div>
-<div class="line">    cmd up;</div>
-<div class="line">    cmd down;</div>
-<div class="line">    cmd show;</div>
-<div class="line">} plugin_interface;</div>
+<div class="line">    <span class="comment">// The plugin is responsible for filling these on load.</span></div>
+<div class="line">    void(*update)(<span class="keywordtype">void</span>* plugin_data);</div>
+<div class="line">    <span class="keywordtype">void</span>* plugin_data;</div>
+<div class="line">} plugin_interface_t;</div>
 <div class="line"> </div>
 <div class="line"><span class="preprocessor">#endif</span></div>
 </div><!-- fragment --> </div><!-- contents -->

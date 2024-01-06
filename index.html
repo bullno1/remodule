@@ -85,7 +85,7 @@ $(function() {
 </div><!-- fragment --><p> Additionally, a plugin must define an <a class="el" href="remodule_8h.html#a5ae2d18e9633a611b7c584ded3ccb32d">entrypoint </a>: </p><div class="fragment"><div class="line"><span class="keywordtype">void</span></div>
 <div class="line"><a class="code" href="remodule_8h.html#a5ae2d18e9633a611b7c584ded3ccb32d">remodule_entry</a>(<a class="code" href="remodule_8h.html#aa1e053241a66b54fd4a39f1c843ded56">remodule_op_t</a> op, <span class="keywordtype">void</span>* userdata) {</div>
 <div class="line">    <span class="comment">// The meaning of userdata must be agreed upon between host and plugin</span></div>
-<div class="line">    plugin_interface* <span class="keyword">interface </span>= userdata;</div>
+<div class="line">    plugin_interface_t* <span class="keyword">interface </span>= userdata;</div>
 <div class="line">    <span class="comment">// Handle plugin lifecycle</span></div>
 <div class="line">    <span class="keywordflow">switch</span> (op) {</div>
 <div class="line">        <span class="keywordflow">case</span> <a class="code" href="remodule_8h.html#a3c24a33e8696b74516f62730c2bd32e3a1a88a8b34db1111719cafc5ca647e795">REMODULE_OP_LOAD</a>:</div>
@@ -118,7 +118,11 @@ $(function() {
 </div><!-- fragment --><p> If a plugin has any global state that needs to be preserved across reloads, mark those with <a class="el" href="remodule_8h.html#a4fe0e8f583cb6ec196f0141cc0939762">REMODULE_VAR</a>: </p><div class="fragment"><div class="line"><span class="comment">// This variable will be preserved across reloads.</span></div>
 <div class="line"><a class="code" href="remodule_8h.html#a4fe0e8f583cb6ec196f0141cc0939762">REMODULE_VAR</a>(<span class="keywordtype">int</span>, counter) = 0;</div>
 <div class="ttc" id="aremodule_8h_html_a4fe0e8f583cb6ec196f0141cc0939762"><div class="ttname"><a href="remodule_8h.html#a4fe0e8f583cb6ec196f0141cc0939762">REMODULE_VAR</a></div><div class="ttdeci">#define REMODULE_VAR(TYPE, NAME)</div><div class="ttdoc">Mark a global variable in the plugin for state transfer.</div><div class="ttdef"><b>Definition:</b> remodule.h:68</div></div>
-</div><!-- fragment --><p> The plugin will now be loadable from the host with <a class="el" href="remodule_8h.html#a52ce34f4771fd4282958846fe7167f91">remodule_load</a>: </p><div class="fragment"><div class="line">    plugin_interface interface;  <span class="comment">// This will be passed verbatim to the plugin</span></div>
+</div><!-- fragment --><p> The plugin will now be loadable from the host with <a class="el" href="remodule_8h.html#a52ce34f4771fd4282958846fe7167f91">remodule_load</a>: </p><div class="fragment"><div class="line">    <span class="comment">// This will be passed verbatim to the plugin</span></div>
+<div class="line">    plugin_interface_t <span class="keyword">interface </span>= {</div>
+<div class="line">        <span class="comment">// Something the plugin can call to communicate with the host</span></div>
+<div class="line">        .request_exit = request_exit,</div>
+<div class="line">    };</div>
 <div class="line">    <a class="code" href="remodule_8h.html#a7288a5c7bb970746c16f266cf239409d">remodule_t</a>* mod = <a class="code" href="remodule_8h.html#a52ce34f4771fd4282958846fe7167f91">remodule_load</a>(<span class="stringliteral">&quot;./plugin&quot;</span> <a class="code" href="remodule_8h.html#ae0328ee7751ef8aabb5fbd5e38cbfd5a">REMODULE_DYNLIB_EXT</a>, &amp;interface);</div>
 <div class="ttc" id="aremodule_8h_html_a52ce34f4771fd4282958846fe7167f91"><div class="ttname"><a href="remodule_8h.html#a52ce34f4771fd4282958846fe7167f91">remodule_load</a></div><div class="ttdeci">remodule_t * remodule_load(const char *path, void *userdata)</div><div class="ttdoc">Load a module.</div></div>
 <div class="ttc" id="aremodule_8h_html_a7288a5c7bb970746c16f266cf239409d"><div class="ttname"><a href="remodule_8h.html#a7288a5c7bb970746c16f266cf239409d">remodule_t</a></div><div class="ttdeci">struct remodule_s remodule_t</div><div class="ttdoc">A reloadable module.</div><div class="ttdef"><b>Definition:</b> remodule.h:139</div></div>

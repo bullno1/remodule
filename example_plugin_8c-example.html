@@ -70,9 +70,14 @@ $(function() {
 <div class="line"><span class="preprocessor">#include &quot;<a class="code" href="remodule_8h.html">remodule.h</a>&quot;</span></div>
 <div class="line"><span class="preprocessor">#include &quot;example_shared.h&quot;</span></div>
 <div class="line"><span class="preprocessor">#include &lt;stdio.h&gt;</span></div>
+<div class="line"><span class="preprocessor">#include &lt;string.h&gt;</span></div>
 <div class="line"> </div>
 <div class="line"><span class="comment">// This variable will be preserved across reloads.</span></div>
 <div class="line"><a name="a0"></a><a class="code" href="remodule_8h.html#a4fe0e8f583cb6ec196f0141cc0939762">REMODULE_VAR</a>(<span class="keywordtype">int</span>, counter) = 0;</div>
+<div class="line"> </div>
+<div class="line"><span class="keyword">struct </span>{</div>
+<div class="line">    plugin_interface_t* interface;</div>
+<div class="line">} plugin_data;</div>
 <div class="line"> </div>
 <div class="line"><span class="keyword">static</span> <span class="keywordtype">void</span></div>
 <div class="line">show(<span class="keywordtype">void</span>) {</div>
@@ -92,16 +97,39 @@ $(function() {
 <div class="line">}</div>
 <div class="line"> </div>
 <div class="line"><span class="keyword">static</span> <span class="keywordtype">void</span></div>
-<div class="line">register_plugin(plugin_interface* interface) {</div>
-<div class="line">    interface-&gt;up = up;</div>
-<div class="line">    interface-&gt;down = down;</div>
-<div class="line">    interface-&gt;show = show;</div>
+<div class="line">update(<span class="keywordtype">void</span>* plugin_data) {</div>
+<div class="line">    plugin_interface_t* <span class="keyword">interface </span>= plugin_data;</div>
+<div class="line">    <span class="keywordtype">char</span> line[1024];</div>
+<div class="line"> </div>
+<div class="line">    <span class="comment">// EOF reached</span></div>
+<div class="line">    <span class="keywordflow">if</span> (fgets(line, <span class="keyword">sizeof</span>(line), stdin) == NULL) {</div>
+<div class="line">        interface-&gt;request_exit();</div>
+<div class="line">        <span class="keywordflow">return</span>;</div>
+<div class="line">    }</div>
+<div class="line"> </div>
+<div class="line">    <span class="keywordflow">if</span> (strcmp(line, <span class="stringliteral">&quot;up\n&quot;</span>) == 0) {</div>
+<div class="line">        up();</div>
+<div class="line">    } <span class="keywordflow">else</span> <span class="keywordflow">if</span> (strcmp(line, <span class="stringliteral">&quot;down\n&quot;</span>) == 0) {</div>
+<div class="line">        down();</div>
+<div class="line">    } <span class="keywordflow">else</span> <span class="keywordflow">if</span> (strcmp(line, <span class="stringliteral">&quot;show\n&quot;</span>) == 0) {</div>
+<div class="line">        show();</div>
+<div class="line">    } <span class="keywordflow">else</span> <span class="keywordflow">if</span> (strcmp(line, <span class="stringliteral">&quot;exit\n&quot;</span>) == 0) {</div>
+<div class="line">        interface-&gt;request_exit();</div>
+<div class="line">    } <span class="keywordflow">else</span> {</div>
+<div class="line">        fprintf(stderr, <span class="stringliteral">&quot;Invalid command: %s&quot;</span>, line);</div>
+<div class="line">    }</div>
+<div class="line">}</div>
+<div class="line"> </div>
+<div class="line"><span class="keyword">static</span> <span class="keywordtype">void</span></div>
+<div class="line">register_plugin(plugin_interface_t* interface) {</div>
+<div class="line">    interface-&gt;update = update;</div>
+<div class="line">    interface-&gt;plugin_data = interface;</div>
 <div class="line">}</div>
 <div class="line"> </div>
 <div class="line"><span class="keywordtype">void</span></div>
 <div class="line"><a name="a1"></a><a class="code" href="remodule_8h.html#a5ae2d18e9633a611b7c584ded3ccb32d">remodule_entry</a>(<a class="code" href="remodule_8h.html#aa1e053241a66b54fd4a39f1c843ded56">remodule_op_t</a> op, <span class="keywordtype">void</span>* userdata) {</div>
 <div class="line">    <span class="comment">// The meaning of userdata must be agreed upon between host and plugin</span></div>
-<div class="line">    plugin_interface* <span class="keyword">interface </span>= userdata;</div>
+<div class="line">    plugin_interface_t* <span class="keyword">interface </span>= userdata;</div>
 <div class="line">    <span class="comment">// Handle plugin lifecycle</span></div>
 <div class="line">    <span class="keywordflow">switch</span> (op) {</div>
 <div class="line">        <span class="keywordflow">case</span> <a name="a2"></a><a class="code" href="remodule_8h.html#a3c24a33e8696b74516f62730c2bd32e3a1a88a8b34db1111719cafc5ca647e795">REMODULE_OP_LOAD</a>:</div>

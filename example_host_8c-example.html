@@ -73,39 +73,35 @@ $(function() {
 <div class="line"><span class="preprocessor">#include &quot;<a class="code" href="remodule_8h.html">remodule.h</a>&quot;</span></div>
 <div class="line"> </div>
 <div class="line"><span class="preprocessor">#include &lt;stdio.h&gt;</span></div>
-<div class="line"><span class="preprocessor">#include &lt;string.h&gt;</span></div>
-<div class="line"><span class="preprocessor">#include &lt;stdbool.h&gt;</span></div>
 <div class="line"><span class="preprocessor">#include &quot;example_shared.h&quot;</span></div>
+<div class="line"> </div>
+<div class="line"><span class="keyword">static</span> <span class="keywordtype">bool</span> should_run = <span class="keyword">true</span>;</div>
+<div class="line"> </div>
+<div class="line"><span class="keyword">static</span> <span class="keywordtype">void</span></div>
+<div class="line">request_exit(<span class="keywordtype">void</span>) {</div>
+<div class="line">    should_run = <span class="keyword">false</span>;</div>
+<div class="line">}</div>
 <div class="line"> </div>
 <div class="line"><span class="keywordtype">int</span></div>
 <div class="line">main(<span class="keywordtype">int</span> argc, <span class="keyword">const</span> <span class="keywordtype">char</span>* argv[]) {</div>
-<div class="line">    plugin_interface interface;  <span class="comment">// This will be passed verbatim to the plugin</span></div>
+<div class="line">    <span class="comment">// This will be passed verbatim to the plugin</span></div>
+<div class="line">    plugin_interface_t <span class="keyword">interface </span>= {</div>
+<div class="line">        <span class="comment">// Something the plugin can call to communicate with the host</span></div>
+<div class="line">        .request_exit = request_exit,</div>
+<div class="line">    };</div>
 <div class="line">    <a class="code" href="remodule_8h.html#a7288a5c7bb970746c16f266cf239409d">remodule_t</a>* mod = <a name="a0"></a><a class="code" href="remodule_8h.html#a52ce34f4771fd4282958846fe7167f91">remodule_load</a>(<span class="stringliteral">&quot;./plugin&quot;</span> <a name="a1"></a><a class="code" href="remodule_8h.html#ae0328ee7751ef8aabb5fbd5e38cbfd5a">REMODULE_DYNLIB_EXT</a>, &amp;interface);</div>
 <div class="line">    <a class="code" href="remodule__monitor_8h.html#a602d6ef2806b376dc92b2440e445fe69">remodule_monitor_t</a>* mon = <a name="a2"></a><a class="code" href="remodule__monitor_8h.html#ac153f590256e2db664a81fd03656b453">remodule_monitor</a>(mod);</div>
 <div class="line"> </div>
-<div class="line">    <span class="keywordtype">char</span> line[1024];</div>
-<div class="line">    <span class="keywordflow">while</span> (<span class="keyword">true</span>) {</div>
-<div class="line">        <span class="keywordflow">if</span> (fgets(line, <span class="keyword">sizeof</span>(line), stdin) == NULL) { <span class="keywordflow">break</span>; }</div>
+<div class="line">    <span class="keywordflow">while</span> (should_run) {</div>
+<div class="line">        interface.update(interface.plugin_data);</div>
 <div class="line"> </div>
 <div class="line">        <span class="keywordflow">if</span> (<a name="a3"></a><a class="code" href="remodule__monitor_8h.html#aacedaf424a4ac0f49361d5862163dbd3">remodule_check</a>(mon)) {</div>
 <div class="line">            fprintf(stderr, <span class="stringliteral">&quot;Reloaded %s\n&quot;</span>, <a name="a4"></a><a class="code" href="remodule_8h.html#ad8e7aa79ec5c8c013d7182b8f6ee9b89">remodule_path</a>(mod));</div>
 <div class="line">        }</div>
-<div class="line"> </div>
-<div class="line">        <span class="keywordflow">if</span> (strcmp(line, <span class="stringliteral">&quot;up\n&quot;</span>) == 0) {</div>
-<div class="line">            interface.up();</div>
-<div class="line">        } <span class="keywordflow">else</span> <span class="keywordflow">if</span> (strcmp(line, <span class="stringliteral">&quot;down\n&quot;</span>) == 0) {</div>
-<div class="line">            interface.down();</div>
-<div class="line">        } <span class="keywordflow">else</span> <span class="keywordflow">if</span> (strcmp(line, <span class="stringliteral">&quot;show\n&quot;</span>) == 0) {</div>
-<div class="line">            interface.show();</div>
-<div class="line">        } <span class="keywordflow">else</span> <span class="keywordflow">if</span> (strcmp(line, <span class="stringliteral">&quot;reload\n&quot;</span>) == 0) {</div>
-<div class="line">            <a name="a5"></a><a class="code" href="remodule_8h.html#afee5692857ef207ee9540aab28169bec">remodule_reload</a>(mod);</div>
-<div class="line">        } <span class="keywordflow">else</span> {</div>
-<div class="line">            fprintf(stderr, <span class="stringliteral">&quot;Invalid command: %s&quot;</span>, line);</div>
-<div class="line">        }</div>
 <div class="line">    }</div>
 <div class="line"> </div>
-<div class="line">    <a name="a6"></a><a class="code" href="remodule__monitor_8h.html#a43af2df1bcc9e4d24e5d3690c88aa095">remodule_unmonitor</a>(mon);</div>
-<div class="line">    <a name="a7"></a><a class="code" href="remodule_8h.html#a0ce11bf3d799984b8b12df3b496f83a1">remodule_unload</a>(mod);</div>
+<div class="line">    <a name="a5"></a><a class="code" href="remodule__monitor_8h.html#a43af2df1bcc9e4d24e5d3690c88aa095">remodule_unmonitor</a>(mon);</div>
+<div class="line">    <a name="a6"></a><a class="code" href="remodule_8h.html#a0ce11bf3d799984b8b12df3b496f83a1">remodule_unload</a>(mod);</div>
 <div class="line"> </div>
 <div class="line">    <span class="keywordflow">return</span> 0;</div>
 <div class="line">}</div>
@@ -115,7 +111,6 @@ $(function() {
 <div class="ttc" id="aremodule_8h_html_a7288a5c7bb970746c16f266cf239409d"><div class="ttname"><a href="remodule_8h.html#a7288a5c7bb970746c16f266cf239409d">remodule_t</a></div><div class="ttdeci">struct remodule_s remodule_t</div><div class="ttdoc">A reloadable module.</div><div class="ttdef"><b>Definition:</b> remodule.h:139</div></div>
 <div class="ttc" id="aremodule_8h_html_ad8e7aa79ec5c8c013d7182b8f6ee9b89"><div class="ttname"><a href="remodule_8h.html#ad8e7aa79ec5c8c013d7182b8f6ee9b89">remodule_path</a></div><div class="ttdeci">const char * remodule_path(remodule_t *mod)</div><div class="ttdoc">The path of a module.</div></div>
 <div class="ttc" id="aremodule_8h_html_ae0328ee7751ef8aabb5fbd5e38cbfd5a"><div class="ttname"><a href="remodule_8h.html#ae0328ee7751ef8aabb5fbd5e38cbfd5a">REMODULE_DYNLIB_EXT</a></div><div class="ttdeci">#define REMODULE_DYNLIB_EXT</div><div class="ttdoc">The platform-dependent file extension for dynamic library.</div><div class="ttdef"><b>Definition:</b> remodule.h:127</div></div>
-<div class="ttc" id="aremodule_8h_html_afee5692857ef207ee9540aab28169bec"><div class="ttname"><a href="remodule_8h.html#afee5692857ef207ee9540aab28169bec">remodule_reload</a></div><div class="ttdeci">void remodule_reload(remodule_t *mod)</div><div class="ttdoc">Reload a module.</div></div>
 <div class="ttc" id="aremodule__monitor_8h_html"><div class="ttname"><a href="remodule__monitor_8h.html">remodule_monitor.h</a></div><div class="ttdoc">A single header addon to make reloading automatic.</div></div>
 <div class="ttc" id="aremodule__monitor_8h_html_a43af2df1bcc9e4d24e5d3690c88aa095"><div class="ttname"><a href="remodule__monitor_8h.html#a43af2df1bcc9e4d24e5d3690c88aa095">remodule_unmonitor</a></div><div class="ttdeci">void remodule_unmonitor(remodule_monitor_t *mon)</div><div class="ttdoc">Stop monitoring.</div></div>
 <div class="ttc" id="aremodule__monitor_8h_html_a602d6ef2806b376dc92b2440e445fe69"><div class="ttname"><a href="remodule__monitor_8h.html#a602d6ef2806b376dc92b2440e445fe69">remodule_monitor_t</a></div><div class="ttdeci">struct remodule_monitor_s remodule_monitor_t</div><div class="ttdoc">A monitor handle.</div><div class="ttdef"><b>Definition:</b> remodule_monitor.h:16</div></div>
