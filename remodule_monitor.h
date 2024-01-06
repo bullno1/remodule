@@ -2,13 +2,14 @@
 #define REMODULE_MONITOR_H
 
 #include "remodule.h"
+#include <stdbool.h>
 
 typedef struct remodule_monitor_s remodule_monitor_t;
 
 REMODULE_API remodule_monitor_t*
 remodule_monitor(remodule_t* mod);
 
-REMODULE_API void
+REMODULE_API bool
 remodule_check(remodule_monitor_t* mon);
 
 REMODULE_API void
@@ -18,7 +19,6 @@ remodule_unmonitor(remodule_monitor_t* mon);
 
 #ifdef REMODULE_MONITOR_IMPLEMENTATION
 
-#include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -370,7 +370,7 @@ remodule_monitor(remodule_t* mod) {
 	return mon;
 }
 
-void
+bool
 remodule_check(remodule_monitor_t* mon) {
 	if (mon->root_version == remodule_dirmon_root.version) {
 		remodule_dirmon_update_all();
@@ -378,9 +378,10 @@ remodule_check(remodule_monitor_t* mon) {
 	mon->root_version = remodule_dirmon_root.version;
 
 	if (mon->dirmon_version == mon->dirmon->version) {
-		return;
+		return false;
 	}
 	mon->dirmon_version = mon->dirmon->version;
+	bool reloaded = false;
 
 #if defined(__linux__)
 	struct stat stat_buf;
@@ -397,6 +398,7 @@ remodule_check(remodule_monitor_t* mon) {
 	) {
 		mon->last_modified = stat_buf.st_mtim;
 		remodule_reload(mon->mod);
+		reloaded = true;
 	}
 #elif defined(_WIN32)
 	HANDLE file = CreateFileA(
@@ -423,11 +425,14 @@ remodule_check(remodule_monitor_t* mon) {
 		) {
 			mon->last_modified = last_modified;
 			remodule_reload(mon->mod);
+			reloaded = true;
 		}
 
 		CloseHandle(file);
 	}
 #endif
+
+	return reloaded;
 }
 
 void

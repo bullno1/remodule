@@ -17,7 +17,9 @@ main(int argc, const char* argv[]) {
 	while (true) {
 		if (fgets(line, sizeof(line), stdin) == NULL) { break; }
 
-		remodule_check(mon);
+		if (remodule_check(mon)) {
+			fprintf(stderr, "Reloaded %s\n", remodule_path(mod));
+		}
 
 		if (strcmp(line, "up\n") == 0) {
 			interface.up();
