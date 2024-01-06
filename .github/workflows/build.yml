@@ -28,4 +28,13 @@ jobs:
       - name: Build
         run: |
           cd vs2022
-          msbuild example.sln /property:Configuration=Release
+          msbuild remodule.sln /property:Configuration=Release
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Build
+        run: ./build
