@@ -24,7 +24,7 @@ jobs:
         with:
           version: "5.0.0-beta2"
       - name: Generate project
-        run: premake vs2022
+        run: premake5 vs2022
       - name: Build
         run: |
           cd vs2022
