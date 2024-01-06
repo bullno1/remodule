@@ -28,7 +28,7 @@ jobs:
       - name: Build
         run: |
           cd vs2022
-          msbuild remodule.sln /property:Configuration=Release
+          msbuild remodule.sln
   build-linux:
     runs-on: ubuntu-latest
     steps:
