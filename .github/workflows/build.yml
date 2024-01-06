@@ -1,0 +1,31 @@
+name: Build
+run-name: Build
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+on:
+  - push
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+        with:
+          submodules: recursive
+      - name: Install MSVC
+        uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+          sdk: 10.0.22621.0
+          vsversion: 2022
+      - name: Install Premake
+        uses: abel0b/setup-premake@v2.3
+        with:
+          version: "5.0.0-beta2"
+      - name: Generate project
+        run: premake vs2022
+      - name: Build
+        run: |
+          cd vs2022
+          msbuild example.sln /property:Configuration=Release
