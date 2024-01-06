@@ -1,17 +1,44 @@
 #ifndef REMODULE_MONITOR_H
 #define REMODULE_MONITOR_H
 
+/**
+ * @file
+ * @brief A single header addon to make reloading automatic.
+ *
+ * In **exactly one** source file of the host program, define `REMODULE_MONITOR_IMPLEMENTATION` before including remodule_monitor.h:
+ * @snippet example_host.c Include remodule_monitor
+ */
+
 #include "remodule.h"
 #include <stdbool.h>
 
+//! A monitor handle.
 typedef struct remodule_monitor_s remodule_monitor_t;
 
+/**
+ * @brief Start monitoring.
+ * @param mod A module obtained from @link remodule_load @endlink.
+ * @return A monitor handle.
+ */
 REMODULE_API remodule_monitor_t*
 remodule_monitor(remodule_t* mod);
 
+/**
+ * @brief Check for reload.
+ *
+ * If the module was updated, it will be reloaded with @link remodule_reload @endlink.
+ *
+ * @param mon A monitor handle obtained from @link remodule_monitor @endlink.
+ * @return Whether a reload happened.
+ */
 REMODULE_API bool
 remodule_check(remodule_monitor_t* mon);
 
+/**
+ * @brief Stop monitoring.
+ *
+ * @param mon A monitor handle obtained from @link remodule_monitor @endlink.
+ */
 REMODULE_API void
 remodule_unmonitor(remodule_monitor_t* mon);
 

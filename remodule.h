@@ -1,11 +1,30 @@
 #ifndef REMODULE_H
 #define REMODULE_H
 
+/**
+ * @file
+ * @brief A single file library for live reloading.
+ *
+ * In **exactly one** source file of the host program, define `REMODULE_HOST_IMPLEMENTATION` before including remodule.h:
+ * @snippet example_host.c Include remodule
+ *
+ * Likewise, in **exactly one** source file of every plugin, define `REMODULE_PLUGIN_IMPLEMENTATION` before including remodule.h:
+ * @snippet example_plugin.c Plugin include
+ *
+ * A plugin must define an @link remodule_entry entrypoint @endlink:
+ * @snippet example_plugin.c Plugin entrypoint
+ *
+ * If the plugin has any global state that needs to be preserved across reloads, mark those with @link REMODULE_VAR @endlink:
+ * @snippet example_plugin.c State transfer
+ */
+
 #if defined(__linux__) && !defined(_GNU_SOURCE)
 #define _GNU_SOURCE
 #endif
 
 #include <stddef.h>
+
+//! @cond remodule_internal
 
 #ifdef __cplusplus
 #define REMODULE_API extern "C"
@@ -13,6 +32,17 @@
 #define REMODULE_API
 #endif
 
+//! @endcond
+
+/**
+ * @brief Mark a global variable in the plugin for state transfer.
+ *
+ * Example:
+ * @snippet example_plugin.c State transfer
+ *
+ * @param TYPE the type of the variable.
+ * @param NAME the name of the variable.
+ */
 #define REMODULE_VAR(TYPE, NAME) \
 	extern TYPE NAME; \
 	const remodule_var_info_t remodule__##NAME##_info = { \
@@ -47,6 +77,8 @@
 #	define REMODULE__SECTION_END
 #endif
 
+//! @cond remodule_internal
+
 #ifndef REMODULE_ASSERT
 #include <stdlib.h>
 #include <stdio.h>
@@ -62,6 +94,15 @@
 REMODULE_API const char*
 remodule_last_error(void);
 
+//! @endcond
+
+#endif
+
+#ifdef DOXYGEN
+/**
+ * @brief The platform-dependent file extension for dynamic library.
+ */
+#	define REMODULE_DYNLIB_EXT ".<dll|dylib|so>"
 #endif
 
 #if defined(_WIN32)
@@ -72,34 +113,86 @@ remodule_last_error(void);
 #	define REMODULE_DYNLIB_EXT ".so"
 #endif
 
+//! A reloadable module
 typedef struct remodule_s remodule_t;
-typedef struct remodule_var_info_s remodule_var_info_t;
 
+//! @cond remodule_internal
+typedef struct remodule_var_info_s remodule_var_info_t;
+//! @endcond
+
+/**
+ * @brief The operation that is being executed.
+ */
 typedef enum remodule_op_e {
+	//! The module is being loaded for the first time.
 	REMODULE_OP_LOAD,
+	//! The module is being unloaded.
 	REMODULE_OP_UNLOAD,
+	//! Before a reload, this will be observed by the **old** plugin instance.
 	REMODULE_OP_BEFORE_RELOAD,
+	//! After a reload, this will be observed by the **new** plugin instance.
 	REMODULE_OP_AFTER_RELOAD,
 } remodule_op_t;
 
+//! @cond remodule_internal
 struct remodule_var_info_s {
 	const char* name;
 	size_t name_length;
 	void* value_addr;
 	size_t value_size;
 };
+//! @endcond
 
+/**
+ * @brief Load a module.
+ *
+ * This will trigger @link REMODULE_OP_LOAD @endlink in the module's @link remodule_entry entrypoint @endlink.
+ *
+ * @param path Path to the module.
+ * @param userdata Arbitrary userdata that will be passed to the entrypoint of
+ *   the module.
+ *
+ * @return The reloadable module.
+ */
 REMODULE_API remodule_t*
 remodule_load(const char* path, void* userdata);
 
+/**
+ * @brief Reload a module.
+ *
+ * This will trigger @link REMODULE_OP_BEFORE_RELOAD @endlink and @link REMODULE_OP_AFTER_RELOAD @endlink in the module's @link remodule_entry entrypoint @endlink.
+ */
 REMODULE_API void
 remodule_reload(remodule_t* mod);
 
+/**
+ * @brief Unload a module.
+ *
+ * This will trigger @link REMODULE_OP_UNLOAD @endlink in the module's @link remodule_entry entrypoint @endlink.
+ */
 REMODULE_API void
 remodule_unload(remodule_t* mod);
 
+/**
+ * @brief The path of a module.
+ */
 REMODULE_API const char*
 remodule_path(remodule_t* mod);
+
+#ifdef DOXYGEN
+
+/**
+ * @brief A plugin **must** define this function.
+ *
+ * This will be called at various points during the plugin's lifecycle.
+ *
+ * @param op The operation currently being executed.
+ * @param userdata The userdata passed from the host in @link remodule_load @endlink.
+ */
+REMODULE_API void
+remodule_entry(remodule_op_t op, void* userdata);
+
+#endif
 
 #endif
 

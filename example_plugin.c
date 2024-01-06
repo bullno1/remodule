@@ -1,9 +1,14 @@
+//! [Plugin include]
 #define REMODULE_PLUGIN_IMPLEMENTATION
-#include <stdio.h>
 #include "remodule.h"
+//! [Plugin include]
 #include "example_shared.h"
+#include <stdio.h>
 
+//! [State transfer]
+// This variable will be preserved across reloads.
 REMODULE_VAR(int, counter) = 0;
+//! [State transfer]
 
 static void
 show(void) {
@@ -22,8 +27,10 @@ down(void) {
 	show();
 }
 
+//! [Plugin entrypoint]
 void
 remodule_entry(remodule_op_t op, void* userdata) {
+//! [Plugin entrypoint]
 	plugin_interface* interface = userdata;
 
 	interface->up = up;

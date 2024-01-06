@@ -1,7 +1,13 @@
-#define REMODULE_HOST_IMPLEMENTATION
+//! [Include remodule_monitor]
 #define REMODULE_MONITOR_IMPLEMENTATION
 #include "remodule_monitor.h"
+//! [Include remodule_monitor]
+
+//! [Include remodule]
+#define REMODULE_HOST_IMPLEMENTATION
 #include "remodule.h"
+//! [Include remodule]
+
 #include <stdio.h>
 #include <string.h>
 #include <stdbool.h>
