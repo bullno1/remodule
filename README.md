@@ -32,30 +32,30 @@ Additionally, a plugin must define an entrypoint:
 ```c
 void
 remodule_entry(remodule_op_t op, void* userdata) {
-	// The meaning of userdata must be agreed upon between host and plugin
-	plugin_interface* interface = userdata;
-	// Handle plugin lifecycle
-	switch (op) {
-		case REMODULE_OP_LOAD:
-			// This is called when the plugin is first loaded.
-			printf("Loading\n");
-			register_plugin(interface);
-			break;
-		case REMODULE_OP_UNLOAD:
-			// This is called when the plugin is unloaded.
-			printf("Unloading\n");
-			break;
-		case REMODULE_OP_BEFORE_RELOAD:
-			// This is called on the old instance of the plugin before a reload
-			printf("Begin reload\n");
-			break;
-		case REMODULE_OP_AFTER_RELOAD:
-			// This is called on the new instance of the plugin after a reload
-			printf("End reload\n");
-			// Register the plugin again to replace the old instance
-			register_plugin(interface);
-			break;
-	}
+    // The meaning of userdata must be agreed upon between host and plugin
+    plugin_interface* interface = userdata;
+    // Handle plugin lifecycle
+    switch (op) {
+        case REMODULE_OP_LOAD:
+            // This is called when the plugin is first loaded.
+            printf("Loading\n");
+            register_plugin(interface);
+            break;
+        case REMODULE_OP_UNLOAD:
+            // This is called when the plugin is unloaded.
+            printf("Unloading\n");
+            break;
+        case REMODULE_OP_BEFORE_RELOAD:
+            // This is called on the old instance of the plugin before a reload
+            printf("Begin reload\n");
+            break;
+        case REMODULE_OP_AFTER_RELOAD:
+            // This is called on the new instance of the plugin after a reload
+            printf("End reload\n");
+            // Register the plugin again to replace the old instance
+            register_plugin(interface);
+            break;
+    }
 }
 ```
 
@@ -96,3 +96,5 @@ However, VS 2022 seems to disallow building while the debugger is attached.
 # Documentation
 
 Use [doxygen](https://doxygen.nl) to generate the documentation.
+
+An online version can be found at https://bullno1.github.io/remodule.
