@@ -1,7 +1,17 @@
 #ifndef REMODULE_H
 #define REMODULE_H
 
+#if defined(__linux__) && !defined(_GNU_SOURCE)
+#define _GNU_SOURCE
+#endif
+
 #include <stddef.h>
+
+#ifdef __cplusplus
+#define REMODULE_API extern "C"
+#else
+#define REMODULE_API
+#endif
 
 #define REMODULE_VAR(TYPE, NAME) \
 	extern TYPE NAME; \
@@ -75,16 +85,16 @@ struct remodule_var_info_s {
 	size_t value_size;
 };
 
-remodule_t*
+REMODULE_API remodule_t*
 remodule_load(const char* path, void* userdata);
 
-void
+REMODULE_API void
 remodule_reload(remodule_t* mod);
 
-void
+REMODULE_API void
 remodule_unload(remodule_t* mod);
 
-const char*
+REMODULE_API const char*
 remodule_path(remodule_t* mod);
 
 #endif
@@ -168,7 +178,7 @@ remodule_dynlib_open(const char* path) {
 
 static void*
 remodule_dynlib_find(remodule_dynlib_t lib, const char* name) {
-	return GetProcAddress(lib, name);
+	return (void*)GetProcAddress(lib, name);
 }
 
 static void

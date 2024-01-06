@@ -3,7 +3,7 @@
 #include "remodule_monitor.h"
 #include "remodule.h"
 #include <stdio.h>
-#include <strings.h>
+#include <string.h>
 #include <stdbool.h>
 #include "example_shared.h"
 

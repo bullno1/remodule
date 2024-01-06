@@ -1,21 +1,17 @@
 #ifndef REMODULE_MONITOR_H
 #define REMODULE_MONITOR_H
 
-#if defined(__linux__) && !defined(_GNU_SOURCE)
-#define _GNU_SOURCE
-#endif
-
 #include "remodule.h"
 
 typedef struct remodule_monitor_s remodule_monitor_t;
 
-remodule_monitor_t*
+REMODULE_API remodule_monitor_t*
 remodule_monitor(remodule_t* mod);
 
-void
+REMODULE_API void
 remodule_check(remodule_monitor_t* mon);
 
-void
+REMODULE_API void
 remodule_unmonitor(remodule_monitor_t* mon);
 
 #endif
@@ -23,6 +19,26 @@ remodule_unmonitor(remodule_monitor_t* mon);
 #ifdef REMODULE_MONITOR_IMPLEMENTATION
 
 #include <stdbool.h>
+#include <stdlib.h>
+#include <string.h>
+
+#if defined(__linux__)
+
+#include <sys/inotify.h>
+#include <sys/stat.h>
+#include <linux/limits.h>
+#include <unistd.h>
+#include <libgen.h>
+
+#elif defined(_WIN32)
+
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+
+#include <Windows.h>
+#endif
+
 
 typedef struct remodule_dirmon_link_s {
 	struct remodule_dirmon_link_s* next;
@@ -35,10 +51,14 @@ typedef struct remodule_dirmon_s {
 	int num_monitors;
 	int version;
 
-#ifdef __linux__
+#if defined(__linux__)
 	int watchd;
-	char path[];
+#elif defined(_WIN32)
+	HANDLE dir_handle;
+	OVERLAPPED overlapped;
+	char _Alignas(FILE_NOTIFY_INFORMATION) notification_buf[sizeof(FILE_NOTIFY_INFORMATION) + MAX_PATH];
 #endif
+	char path[];
 } remodule_dirmon_t;
 
 typedef struct remodule_dirmon_root_s {
@@ -47,12 +67,16 @@ typedef struct remodule_dirmon_root_s {
 
 #if defined(__linux__)
 	int inotifyfd;
+#elif defined(_WIN32)
+	HANDLE iocp;
 #endif
 } remodule_dirmon_root_t;
 
 static remodule_dirmon_root_t remodule_dirmon_root = {
 #if defined(__linux__)
 	.inotifyfd = -1,
+#elif defined(_WIN32)
+	.iocp = NULL,
 #endif
 	.link = {
 		.next = &remodule_dirmon_root.link,
@@ -68,18 +92,12 @@ struct remodule_monitor_s {
 
 #if defined(__linux__)
 	struct timespec last_modified;
+#elif defined(_WIN32)
+	FILETIME last_modified;
 #endif
 };
 
-#ifdef __linux__
-
-#include <stdlib.h>
-#include <sys/inotify.h>
-#include <sys/stat.h>
-#include <linux/limits.h>
-#include <unistd.h>
-#include <libgen.h>
-#include <string.h>
+#if defined(__linux__)
 
 static remodule_dirmon_t*
 remodule_dirmon_acquire(const char* path) {
@@ -183,6 +201,128 @@ remodule_dirmon_update_all(void) {
 	}
 }
 
+#elif defined(_WIN32)
+
+static remodule_dirmon_t*
+remodule_dirmon_acquire(const char* path) {
+	char name_buf[MAX_PATH];
+	char* file_part;
+	GetFullPathNameA(path, sizeof(name_buf), name_buf, &file_part);
+	*file_part = '\0';
+
+	for (
+		remodule_dirmon_link_t* itr = remodule_dirmon_root.link.next;
+		itr != &remodule_dirmon_root.link;
+		itr = itr->next
+	) {
+		remodule_dirmon_t* dirmon = (remodule_dirmon_t*)((char*)itr - offsetof(remodule_dirmon_t, link));
+		if (_stricmp(name_buf, dirmon->path) == 0) {
+			++dirmon->num_monitors;
+			return dirmon;
+		}
+	}
+
+	if (remodule_dirmon_root.iocp == NULL) {
+		remodule_dirmon_root.iocp = CreateIoCompletionPort(
+			INVALID_HANDLE_VALUE,
+			NULL,
+			0,
+			1
+		);
+		REMODULE_ASSERT(remodule_dirmon_root.iocp != NULL, "Could not create IOCP");
+	}
+
+	size_t dir_name_len = strlen(name_buf);
+	remodule_dirmon_t* dirmon = malloc(
+		sizeof(remodule_dirmon_t) + dir_name_len + 1
+	);
+	*dirmon = (remodule_dirmon_t){
+		.num_monitors = 1,
+	};
+
+	dirmon->link.next = remodule_dirmon_root.link.next;
+	remodule_dirmon_root.link.next->prev = &dirmon->link;
+	dirmon->link.prev = &remodule_dirmon_root.link;
+	remodule_dirmon_root.link.next = &dirmon->link;
+
+	memcpy(dirmon->path, name_buf, dir_name_len);
+	dirmon->path[dir_name_len] = '\0';
+
+	dirmon->dir_handle = CreateFileA(
+		name_buf,
+		0,
+		FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE,
+		NULL,
+		OPEN_EXISTING,
+		FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OVERLAPPED,
+		NULL
+	);
+	REMODULE_ASSERT(dirmon->dir_handle != INVALID_HANDLE_VALUE, "Could not open directory");
+
+	REMODULE_ASSERT(
+		CreateIoCompletionPort(dirmon->dir_handle, remodule_dirmon_root.iocp, 0, 1) != NULL,
+		"Could not associate directory to IOCP"
+	);
+
+	ReadDirectoryChangesW(
+		dirmon->dir_handle,
+		dirmon->notification_buf,
+		sizeof(dirmon->notification_buf),
+		FALSE,
+		FILE_NOTIFY_CHANGE_FILE_NAME | FILE_NOTIFY_CHANGE_LAST_WRITE | FILE_NOTIFY_CHANGE_CREATION,
+		NULL,
+		&dirmon->overlapped,
+		NULL
+	);
+
+	return dirmon;
+}
+
+static void
+remodule_dirmon_release(remodule_dirmon_t* dirmon) {
+	if (--dirmon->num_monitors > 0) { return; }
+
+	dirmon->link.next->prev = dirmon->link.prev;
+	dirmon->link.prev->next = dirmon->link.next;
+	CancelIo(dirmon->dir_handle);
+	CloseHandle(dirmon->dir_handle);
+	free(dirmon);
+
+	if (remodule_dirmon_root.link.next == &remodule_dirmon_root.link) {
+		CloseHandle(remodule_dirmon_root.iocp);
+		remodule_dirmon_root.iocp = NULL;
+	}
+}
+
+static void
+remodule_dirmon_update_all(void) {
+	DWORD num_bytes;
+	ULONG_PTR key;
+	OVERLAPPED* overlapped;
+	bool has_update = false;
+
+	while (GetQueuedCompletionStatus(remodule_dirmon_root.iocp, &num_bytes, &key, &overlapped, 0)) {
+		has_update = true;
+
+		for (
+			remodule_dirmon_link_t* itr = remodule_dirmon_root.link.next;
+			itr != &remodule_dirmon_root.link;
+			itr = itr->next
+		) {
+			remodule_dirmon_t* dirmon = (remodule_dirmon_t*)((char*)itr - offsetof(remodule_dirmon_t, link));
+
+			if (&dirmon->overlapped == overlapped) {
+				++dirmon->version;
+				break;
+			}
+		}
+	}
+
+	if (has_update) {
+		++remodule_dirmon_root.version;
+	}
+}
+
 #else
 #error Unsupported platform
 #endif
@@ -202,8 +342,21 @@ remodule_monitor(remodule_t* mod) {
 
 #if defined(__linux__)
 	struct stat stat_buf;
-	stat(path, &stat_buf);
+	REMODULE_ASSERT(stat(path, &stat_buf) == 0, "Could not stat file");
 	mon->last_modified = stat_buf.st_mtim;
+#elif defined(_WIN32)
+	HANDLE file = CreateFileA(
+		path,
+		0,
+		FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE,
+		NULL,
+		OPEN_EXISTING,
+		FILE_ATTRIBUTE_NORMAL,
+		NULL
+	);
+	REMODULE_ASSERT(file != INVALID_HANDLE_VALUE, "Could not stat file");
+	REMODULE_ASSERT(GetFileTime(file, NULL, NULL, &mon->last_modified), "Could not stat file");
+	CloseHandle(file);
 #endif
 
 	return mon;
@@ -223,13 +376,46 @@ remodule_check(remodule_monitor_t* mon) {
 
 #if defined(__linux__)
 	struct stat stat_buf;
-	stat(remodule_path(mon->mod), &stat_buf);
 
 	if (
-		mon->last_modified.tv_sec < stat_buf.st_mtim.tv_sec
-		|| mon->last_modified.tv_nsec < stat_buf.st_mtim.tv_nsec
+		stat(remodule_path(mon->mod), &stat_buf) == 0
+		&& (
+			mon->last_modified.tv_sec < stat_buf.st_mtim.tv_sec
+			|| (
+				mon->last_modified.tv_sec == stat_buf.st_mtim.tv_sec
+				&& mon->last_modified.tv_nsec < stat_buf.st_mtim.tv_nsec
+			)
+		)
 	) {
 		mon->last_modified = stat_buf.st_mtim;
+		remodule_reload(mon->mod);
+	}
+#elif defined(_WIN32)
+	HANDLE file = CreateFileA(
+		remodule_path(mon->mod),
+		0,
+		FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE,
+		NULL,
+		OPEN_EXISTING,
+		FILE_ATTRIBUTE_NORMAL,
+		NULL
+	);
+
+	FILETIME last_modified;
+	if (
+		file != INVALID_HANDLE_VALUE
+		&& GetFileTime(file, NULL, NULL, &last_modified)
+		&& (
+			mon->last_modified.dwHighDateTime < last_modified.dwHighDateTime
+			|| (
+				mon->last_modified.dwHighDateTime == last_modified.dwHighDateTime
+				&& mon->last_modified.dwLowDateTime < last_modified.dwLowDateTime
+			)
+		)
+	) {
+		mon->last_modified = last_modified;
+		CloseHandle(file);
+
 		remodule_reload(mon->mod);
 	}
 #endif
