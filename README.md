@@ -1,5 +1,7 @@
 # re:module
 
+![Build status](https://github.com/bullno1/remodule/actions/workflows/build.yml/badge.svg)
+
 re:module is a library for live reloading.
 
 # Usage

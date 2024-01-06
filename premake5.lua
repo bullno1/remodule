@@ -1,6 +1,9 @@
 workspace "remodule"
-  configurations { "Debug", "Release" }
   location(_ACTION)
+  configurations { "Debug", "Release" }
+  architecture "x86_64"
+  filter {"system:windows", "action:vs*"}
+    systemversion("10.0.22621.0")
 
   warnings "Extra"
   flags {
