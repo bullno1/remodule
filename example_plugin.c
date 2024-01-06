@@ -11,10 +11,6 @@
 REMODULE_VAR(int, counter) = 0;
 //! [State transfer]
 
-struct {
-	plugin_interface_t* interface;
-} plugin_data;
-
 static void
 show(void) {
 	printf("Counter = %d\n", counter);
