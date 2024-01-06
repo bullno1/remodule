@@ -230,6 +230,7 @@ remodule_last_error(void) {
 #elif defined(__unix__) || defined(__APPLE__)
 
 #include <dlfcn.h>
+#include <errno.h>
 
 typedef void* remodule_dynlib_t;
 
@@ -250,7 +251,7 @@ remodule_dynlib_close(remodule_dynlib_t lib) {
 
 const char*
 remodule_last_error(void) {
-	return strerror(errno);
+	return errno ? strerror(errno) : dlerror();
 }
 
 #endif
