@@ -3,7 +3,7 @@ name: Deploy Github pages from Doxygen
 on:
   push:
     branches:
-      - main
+      - master
 
 jobs:
   deploy:
