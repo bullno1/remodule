@@ -66,7 +66,6 @@ remodule_unmonitor(remodule_monitor_t* mon);
 #include <Windows.h>
 #endif
 
-
 typedef struct remodule_dirmon_link_s {
 	struct remodule_dirmon_link_s* next;
 	struct remodule_dirmon_link_s* prev;
@@ -282,7 +281,12 @@ remodule_dirmon_acquire(const char* path) {
 	REMODULE_ASSERT(dirmon->dir_handle != INVALID_HANDLE_VALUE, "Could not open directory");
 
 	REMODULE_ASSERT(
-		CreateIoCompletionPort(dirmon->dir_handle, remodule_dirmon_root.iocp, 0, 1) != NULL,
+		CreateIoCompletionPort(
+			dirmon->dir_handle,
+			remodule_dirmon_root.iocp,
+			0,
+			1
+		) != NULL,
 		"Could not associate directory to IOCP"
 	);
 
@@ -292,7 +296,9 @@ remodule_dirmon_acquire(const char* path) {
 			dirmon->notification_buf,
 			sizeof(dirmon->notification_buf),
 			FALSE,
-			FILE_NOTIFY_CHANGE_FILE_NAME | FILE_NOTIFY_CHANGE_LAST_WRITE | FILE_NOTIFY_CHANGE_CREATION,
+			FILE_NOTIFY_CHANGE_FILE_NAME
+			| FILE_NOTIFY_CHANGE_LAST_WRITE
+			| FILE_NOTIFY_CHANGE_CREATION,
 			NULL,
 			&dirmon->overlapped,
 			NULL
@@ -343,7 +349,9 @@ remodule_dirmon_update_all(void) {
 						dirmon->notification_buf,
 						sizeof(dirmon->notification_buf),
 						FALSE,
-						FILE_NOTIFY_CHANGE_FILE_NAME | FILE_NOTIFY_CHANGE_LAST_WRITE | FILE_NOTIFY_CHANGE_CREATION,
+						FILE_NOTIFY_CHANGE_FILE_NAME
+						| FILE_NOTIFY_CHANGE_LAST_WRITE
+						| FILE_NOTIFY_CHANGE_CREATION,
 						NULL,
 						&dirmon->overlapped,
 						NULL
@@ -390,7 +398,10 @@ remodule_monitor(remodule_t* mod) {
 		NULL
 	);
 	REMODULE_ASSERT(file != INVALID_HANDLE_VALUE, "Could not stat file");
-	REMODULE_ASSERT(GetFileTime(file, NULL, NULL, &mon->last_modified), "Could not stat file");
+	REMODULE_ASSERT(
+		GetFileTime(file, NULL, NULL, &mon->last_modified),
+		"Could not stat file"
+	);
 	CloseHandle(file);
 #endif
 
