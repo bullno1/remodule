@@ -21,6 +21,7 @@
 #endif
 
 #include <stddef.h>
+#include <stdbool.h>
 
 //! @cond remodule_internal
 
@@ -138,9 +139,26 @@ remodule_last_error(void);
 //! A reloadable module
 typedef struct remodule_s remodule_t;
 
-//! @cond remodule_internal
+//! Information about a variable marked with @link REMODULE_VAR @endlink
 typedef struct remodule_var_info_s remodule_var_info_t;
-//! @endcond
+
+/**
+ * @brief A callback function to scan variables of a module.
+ *
+ * This will be called on each variables marked with @link REMODULE_VAR @endlink.
+ *
+ * @param var_info Information about the current variable.
+ * @param userdata Arbitrary userdata.
+ * @return Whether scanning should continue.
+ *   Return `false` to stop scanning early.
+ *
+ * @see remodule_scan_vars
+ * @see REMODULE_VAR
+ */
+typedef bool (*remodule_var_scanner_fn_t)(
+	const remodule_var_info_t* var_info,
+	void* userdata
+);
 
 /**
  * @brief The operation that is being executed.
@@ -156,14 +174,19 @@ typedef enum remodule_op_e {
 	REMODULE_OP_AFTER_RELOAD,
 } remodule_op_t;
 
-//! @cond remodule_internal
+/**
+ * @brief Information about a variable marked with @link REMODULE_VAR @endlink
+ */
 struct remodule_var_info_s {
+	//! The variable's name
 	const char* name;
+	//! The length of the name, excluding the null-terminator
 	size_t name_length;
+	//! The memory address of the variable
 	void* value_addr;
+	//! The size of the value
 	size_t value_size;
 };
-//! @endcond
 
 /**
  * @brief Load a module.
@@ -204,10 +227,42 @@ REMODULE_API void
 remodule_unload(remodule_t* mod);
 
 /**
- * @brief The path of a module.
+ * @brief Scan all variables in a module.
+ *
+ * This will call `itr` on every variables marked with
+ * @link REMODULE_VAR @endlink in a module.
+ *
+ * This function is also available in a module.
+ * In this case, `mod` is ignored.
+ * The function will always iterate over variables of the calling modules.
+ *
+ * @param mod The module to scan.
+ *   Ignored if called from within a module.
+ * @param itr The callback function.
+ * @param userdata Arbitrary userdata to pass to the callback function.
+ *
+ * @see REMODULE_VAR
+ */
+REMODULE_API void
+remodule_scan_vars(
+	remodule_t* mod,
+	remodule_var_scanner_fn_t itr,
+	void* userdata
+);
+
+/**
+ * @brief Get the path of a module.
  */
 REMODULE_API const char*
 remodule_path(remodule_t* mod);
+
+/**
+ * @brief Get the userdata associated with a module.
+ *
+ * This is the same pointer previously passed to @link remodule_load @endlink.
+ */
+REMODULE_API void*
+remodule_userdata(remodule_t* mod);
 
 #ifdef DOXYGEN
 
@@ -283,6 +338,36 @@ REMODULE_EXPORT remodule_plugin_info_t REMODULE_INFO_SYMBOL = {
 	.var_info_begin = REMODULE_VAR_INFO_BEGIN,
 	.var_info_end = REMODULE_VAR_INFO_END,
 };
+
+// In my editor, I define both both REMODULE_HOST_IMPLEMENTATION and
+// REMODULE_PLUGIN_IMPLEMENTATION at the same time to get syntax highlighting
+// and error checking working.
+// However, it will righty complain about `remodule_scan_vars` being redefined.
+// This should never happen in normal usage.
+#ifdef REMODULE_HOST_IMPLEMENTATION
+#define REMODULE_SCAN_VAR_FN remodule_scan_vars_plugin
+#else
+#define REMODULE_SCAN_VAR_FN remodule_scan_vars
+#endif
+
+void
+REMODULE_SCAN_VAR_FN(
+	remodule_t* mod,
+	remodule_var_scanner_fn_t scanner,
+	void* userdata
+) {
+	for (
+		const remodule_var_info_t* const* itr = REMODULE_VAR_INFO_BEGIN;
+		itr != REMODULE_VAR_INFO_END;
+		++itr
+	) {
+		if (*itr == NULL) { continue; }
+		const remodule_var_info_t* var_info = *itr;
+		if (!scanner(var_info, userdata)) {
+			break;
+		}
+	}
+}
 
 #endif
 
@@ -512,6 +597,30 @@ remodule_unload(remodule_t* mod) {
 const char*
 remodule_path(remodule_t* mod) {
 	return mod->path;
+}
+
+void*
+remodule_userdata(remodule_t* mod) {
+	return mod->userdata;
+}
+
+void
+remodule_scan_vars(
+	remodule_t* mod,
+	remodule_var_scanner_fn_t scanner,
+	void* userdata
+) {
+	for (
+		const remodule_var_info_t* const* itr = mod->info.var_info_begin;
+		itr != mod->info.var_info_end;
+		++itr
+	) {
+		if (*itr == NULL) { continue; }
+		const remodule_var_info_t* var_info = *itr;
+		if (!scanner(var_info, userdata)) {
+			break;
+		}
+	}
 }
 
 #endif
