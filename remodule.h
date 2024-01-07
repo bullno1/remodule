@@ -385,6 +385,7 @@ REMODULE_SCAN_VAR_FN(
 	remodule_var_scanner_fn_t scanner,
 	void* userdata
 ) {
+	(void)mod;
 	for (
 		const remodule_var_info_t* const* itr = REMODULE_VAR_INFO_BEGIN;
 		itr != REMODULE_VAR_INFO_END;
