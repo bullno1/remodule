@@ -39,8 +39,8 @@
  * Example:
  * @snippet example_plugin.c State transfer
  *
- * @param TYPE the type of the variable.
- * @param NAME the name of the variable.
+ * @param TYPE The type of the variable.
+ * @param NAME The name of the variable.
  *   This must be unique within each plugin.
  *
  * @remarks
@@ -67,12 +67,34 @@
  *   The target for serialization could be the `userdata` pointer in @link remodule_entry @endlink.
  */
 #define REMODULE_VAR(TYPE, NAME) \
+	REMODULE_VAR_META(TYPE, NAME, NULL)
+
+/**
+ * @brief Mark a global variable in the plugin for state transfer with metadata.
+ *
+ * This is equivalent to @link REMODULE_VAR @endlink but a variable can be
+ * associated with some user-defined metadata.
+ *
+ * This metadata is accessible through @ref remodule_scan_vars.
+ *
+ * @param TYPE The type of the variable.
+ * @param NAME The name of the variable.
+ *   This must be unique within each plugin.
+ * @param METADATA Metadata to be associated with this variable.
+ *   This must be a pointer.
+ *   This value will **NOT** be preserved across reloads.
+ *
+ * @see REMODULE_VAR
+ * @see remodule_scan_vars
+ */
+#define REMODULE_VAR_META(TYPE, NAME, METADATA) \
 	extern TYPE NAME; \
 	const remodule_var_info_t remodule__##NAME##_info = { \
 		.name = #NAME, \
 		.name_length = sizeof(#NAME) - 1, \
 		.value_addr = &NAME, \
 		.value_size = sizeof(NAME), \
+		.metadata = METADATA, \
 	}; \
 	REMODULE__SECTION_BEGIN \
 	const remodule_var_info_t* const remodule__##NAME##_info_ptr = &remodule__##NAME##_info; \
@@ -139,13 +161,13 @@ remodule_last_error(void);
 //! A reloadable module
 typedef struct remodule_s remodule_t;
 
-//! Information about a variable marked with @link REMODULE_VAR @endlink
+//! Information about a variable marked with @ref REMODULE_VAR.
 typedef struct remodule_var_info_s remodule_var_info_t;
 
 /**
  * @brief A callback function to scan variables of a module.
  *
- * This will be called on each variables marked with @link REMODULE_VAR @endlink.
+ * This will be called on each variables marked with @ref REMODULE_VAR.
  *
  * @param var_info Information about the current variable.
  * @param userdata Arbitrary userdata.
@@ -186,6 +208,11 @@ struct remodule_var_info_s {
 	void* value_addr;
 	//! The size of the value
 	size_t value_size;
+	/**
+	 * @brief User-defined metadata
+	 * @see REMODULE_VAR_META
+	 */
+	void* metadata;
 };
 
 /**
