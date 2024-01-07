@@ -8,11 +8,11 @@ It consists of these modules:
 
 A project using re:module must be structured as follow:
 
-* A host program with minimal code (e.g: @link example_host.c @endlink).
+* A host program with minimal code (e.g: @ref example_host.c).
   This will not be reloadable.
-* One or more dynamic library as plugin (e.g: @link example_plugin.c @endlink).
+* One or more dynamic library as plugin (e.g: @ref example_plugin.c).
   This is where the bulk of the behaviour should be.
-* Optionally, some sort of shared interface between a program and its plugin: (e.g: @link example_shared.h @endlink).
+* Optionally, some sort of shared interface between a program and its plugin: (e.g: @ref example_shared.h).
 
 In **exactly one** source file of the host program, define `REMODULE_HOST_IMPLEMENTATION` before including remodule.h:
 @snippet example_host.c Include remodule
@@ -29,7 +29,7 @@ If a plugin has any global state that needs to be preserved across reloads, mark
 The plugin will now be loadable from the host with @link remodule_load @endlink:
 @snippet{trimleft} example_host.c Load plugin
 
-Subsequenly, @link remodule_reload @endlink can be used to reload a plugin.
+Subsequenly, @ref remodule_reload can be used to reload a plugin.
 To make this automatic, refer to remodule_monitor.h.
 
 When the plugin is no longer needed, unload it with @link remodule_unload @endlink.

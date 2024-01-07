@@ -13,7 +13,7 @@
  *
  * A plugin must define an @link remodule_entry entrypoint @endlink.
  *
- * If a plugin has any global state that needs to be preserved across reloads, mark those with @link REMODULE_VAR @endlink.
+ * If a plugin has any global state that needs to be preserved across reloads, mark those with @ref REMODULE_VAR.
  */
 
 #if defined(__linux__) && !defined(_GNU_SOURCE)
@@ -61,10 +61,9 @@
  *   allocated using the plugin's private allocator are problematic.
  *
  * @remarks
- *   For more complex cases, make use of
- *   @link REMODULE_OP_BEFORE_RELOAD @endlink and
- *   @link REMODULE_OP_AFTER_RELOAD @endlink to serialize and deserialize.
- *   The target for serialization could be the `userdata` pointer in @link remodule_entry @endlink.
+ *   For more complex cases, make use of @ref REMODULE_OP_BEFORE_RELOAD and
+ *   @ref REMODULE_OP_AFTER_RELOAD to serialize and deserialize.
+ *   The target for serialization could be the `userdata` pointer in @ref remodule_entry.
  */
 #define REMODULE_VAR(TYPE, NAME) \
 	REMODULE_VAR_META(TYPE, NAME, NULL)
@@ -72,7 +71,7 @@
 /**
  * @brief Mark a global variable in the plugin for state transfer with metadata.
  *
- * This is equivalent to @link REMODULE_VAR @endlink but a variable can be
+ * This is equivalent to @ref REMODULE_VAR but a variable can be
  * associated with some user-defined metadata.
  *
  * This metadata is accessible through @ref remodule_scan_vars.
@@ -197,7 +196,7 @@ typedef enum remodule_op_e {
 } remodule_op_t;
 
 /**
- * @brief Information about a variable marked with @link REMODULE_VAR @endlink
+ * @brief Information about a variable marked with @ref REMODULE_VAR.
  */
 struct remodule_var_info_s {
 	//! The variable's name
@@ -218,7 +217,8 @@ struct remodule_var_info_s {
 /**
  * @brief Load a module.
  *
- * This will trigger @link REMODULE_OP_LOAD @endlink in the module's @link remodule_entry entrypoint @endlink.
+ * This will trigger @ref REMODULE_OP_LOAD in the module's
+ * @link remodule_entry entrypoint @endlink.
  *
  * @param path Path to the module.
  * @param userdata Arbitrary userdata that will be passed to the entrypoint of
@@ -240,7 +240,9 @@ remodule_load(const char* path, void* userdata);
 /**
  * @brief Reload a module.
  *
- * This will trigger @link REMODULE_OP_BEFORE_RELOAD @endlink and @link REMODULE_OP_AFTER_RELOAD @endlink in the module's @link remodule_entry entrypoint @endlink.
+ * This will trigger @ref REMODULE_OP_BEFORE_RELOAD and
+ * @ref REMODULE_OP_AFTER_RELOAD in the module's
+ * @link remodule_entry entrypoint @endlink.
  */
 REMODULE_API void
 remodule_reload(remodule_t* mod);
@@ -248,7 +250,8 @@ remodule_reload(remodule_t* mod);
 /**
  * @brief Unload a module.
  *
- * This will trigger @link REMODULE_OP_UNLOAD @endlink in the module's @link remodule_entry entrypoint @endlink.
+ * This will trigger @ref REMODULE_OP_UNLOAD in the module's
+ * @link remodule_entry entrypoint @endlink.
  */
 REMODULE_API void
 remodule_unload(remodule_t* mod);
@@ -256,8 +259,7 @@ remodule_unload(remodule_t* mod);
 /**
  * @brief Scan all variables in a module.
  *
- * This will call `itr` on every variables marked with
- * @link REMODULE_VAR @endlink in a module.
+ * This will call `itr` on every variables marked with @ref REMODULE_VAR.
  *
  * This function is also available in a module.
  * In this case, `mod` is ignored.
@@ -286,7 +288,7 @@ remodule_path(remodule_t* mod);
 /**
  * @brief Get the userdata associated with a module.
  *
- * This is the same pointer previously passed to @link remodule_load @endlink.
+ * This is the same pointer previously passed to @ref remodule_load.
  */
 REMODULE_API void*
 remodule_userdata(remodule_t* mod);
@@ -299,7 +301,7 @@ remodule_userdata(remodule_t* mod);
  * This will be called at various points during the plugin's lifecycle.
  *
  * @param op The operation currently being executed.
- * @param userdata The userdata passed from the host in @link remodule_load @endlink.
+ * @param userdata The userdata passed from the host in @ref remodule_load.
  *   This always points to the same object between reloads.
  */
 REMODULE_API void
