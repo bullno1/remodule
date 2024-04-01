@@ -35,6 +35,17 @@ REMODULE_API bool
 remodule_check(remodule_monitor_t* mon);
 
 /**
+ * @brief Check for reload.
+ *
+ * Return whether the module has changed.
+ *
+ * @param mon A monitor handle obtained from @link remodule_monitor @endlink.
+ * @return Whether a reload should be made.
+ */
+REMODULE_API bool
+remodule_should_reload(remodule_monitor_t* mon);
+
+/**
  * @brief Stop monitoring.
  *
  * @param mon A monitor handle obtained from @link remodule_monitor @endlink.
@@ -410,6 +421,16 @@ remodule_monitor(remodule_t* mod) {
 
 bool
 remodule_check(remodule_monitor_t* mon) {
+	if (remodule_should_reload(mon)) {
+		remodule_reload(mon->mod);
+		return true;
+	} else {
+		return false;
+	}
+}
+
+bool
+remodule_should_reload(remodule_monitor_t* mon) {
 	if (mon->root_version == remodule_dirmon_root.version) {
 		remodule_dirmon_update_all();
 	}
@@ -419,7 +440,7 @@ remodule_check(remodule_monitor_t* mon) {
 		return false;
 	}
 	mon->dirmon_version = mon->dirmon->version;
-	bool reloaded = false;
+	bool should_reload = false;
 
 #if defined(__linux__)
 	struct stat stat_buf;
@@ -435,8 +456,7 @@ remodule_check(remodule_monitor_t* mon) {
 		)
 	) {
 		mon->last_modified = stat_buf.st_mtim;
-		remodule_reload(mon->mod);
-		reloaded = true;
+		should_reload = true;
 	}
 #elif defined(_WIN32)
 	HANDLE file = CreateFileA(
@@ -462,15 +482,14 @@ remodule_check(remodule_monitor_t* mon) {
 			)
 		) {
 			mon->last_modified = last_modified;
-			remodule_reload(mon->mod);
-			reloaded = true;
+			should_reload = true;
 		}
 
 		CloseHandle(file);
 	}
 #endif
 
-	return reloaded;
+	return should_reload;
 }
 
 void
