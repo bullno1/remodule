@@ -92,6 +92,9 @@ Functions</h2></td></tr>
 <tr class="memitem:aacedaf424a4ac0f49361d5862163dbd3"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="remodule__monitor_8h.html#aacedaf424a4ac0f49361d5862163dbd3">remodule_check</a> (<a class="el" href="remodule__monitor_8h.html#a602d6ef2806b376dc92b2440e445fe69">remodule_monitor_t</a> *mon)</td></tr>
 <tr class="memdesc:aacedaf424a4ac0f49361d5862163dbd3"><td class="mdescLeft">&#160;</td><td class="mdescRight">Check for reload.  <a href="remodule__monitor_8h.html#aacedaf424a4ac0f49361d5862163dbd3">More...</a><br /></td></tr>
 <tr class="separator:aacedaf424a4ac0f49361d5862163dbd3"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a80194f70ef1a0ace884237fde39107be"><td class="memItemLeft" align="right" valign="top">bool&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="remodule__monitor_8h.html#a80194f70ef1a0ace884237fde39107be">remodule_should_reload</a> (<a class="el" href="remodule__monitor_8h.html#a602d6ef2806b376dc92b2440e445fe69">remodule_monitor_t</a> *mon)</td></tr>
+<tr class="memdesc:a80194f70ef1a0ace884237fde39107be"><td class="mdescLeft">&#160;</td><td class="mdescRight">Check for reload.  <a href="remodule__monitor_8h.html#a80194f70ef1a0ace884237fde39107be">More...</a><br /></td></tr>
+<tr class="separator:a80194f70ef1a0ace884237fde39107be"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:a43af2df1bcc9e4d24e5d3690c88aa095"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="remodule__monitor_8h.html#a43af2df1bcc9e4d24e5d3690c88aa095">remodule_unmonitor</a> (<a class="el" href="remodule__monitor_8h.html#a602d6ef2806b376dc92b2440e445fe69">remodule_monitor_t</a> *mon)</td></tr>
 <tr class="memdesc:a43af2df1bcc9e4d24e5d3690c88aa095"><td class="mdescLeft">&#160;</td><td class="mdescRight">Stop monitoring.  <a href="remodule__monitor_8h.html#a43af2df1bcc9e4d24e5d3690c88aa095">More...</a><br /></td></tr>
 <tr class="separator:a43af2df1bcc9e4d24e5d3690c88aa095"><td class="memSeparator" colspan="2">&#160;</td></tr>
@@ -158,6 +161,34 @@ Functions</h2></td></tr>
 <dl class="section return"><dt>Returns</dt><dd>A monitor handle. </dd></dl>
 <dl class="section examples"><dt>Examples</dt><dd><a class="el" href="example_host_8c-example.html#a2">example_host.c</a>.</dd>
 </dl>
+
+</div>
+</div>
+<a id="a80194f70ef1a0ace884237fde39107be"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a80194f70ef1a0ace884237fde39107be">&#9670;&nbsp;</a></span>remodule_should_reload()</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">bool remodule_should_reload </td>
+          <td>(</td>
+          <td class="paramtype"><a class="el" href="remodule__monitor_8h.html#a602d6ef2806b376dc92b2440e445fe69">remodule_monitor_t</a> *&#160;</td>
+          <td class="paramname"><em>mon</em></td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+
+<p>Check for reload. </p>
+<p>Return whether the module has changed.</p>
+<dl class="params"><dt>Parameters</dt><dd>
+  <table class="params">
+    <tr><td class="paramname">mon</td><td>A monitor handle obtained from <a class="el" href="remodule__monitor_8h.html#ac153f590256e2db664a81fd03656b453">remodule_monitor</a>. </td></tr>
+  </table>
+  </dd>
+</dl>
+<dl class="section return"><dt>Returns</dt><dd>Whether a reload should be made. </dd></dl>
 
 </div>
 </div>

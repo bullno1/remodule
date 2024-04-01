@@ -63,7 +63,6 @@ $(function() {
 </div><!-- top -->
 <div class="header">
   <div class="summary">
-<a href="#nested-classes">Classes</a> &#124;
 <a href="#define-members">Macros</a> &#124;
 <a href="#typedef-members">Typedefs</a> &#124;
 <a href="#enum-members">Enumerations</a> &#124;
@@ -76,24 +75,14 @@ $(function() {
 <p>A single file library for live reloading.  
 <a href="#details">More...</a></p>
 <div class="textblock"><code>#include &lt;stddef.h&gt;</code><br />
-<code>#include &lt;stdbool.h&gt;</code><br />
 </div>
 <p><a href="remodule_8h_source.html">Go to the source code of this file.</a></p>
 <table class="memberdecls">
-<tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="nested-classes"></a>
-Classes</h2></td></tr>
-<tr class="memitem:"><td class="memItemLeft" align="right" valign="top">struct &#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="structremodule__var__info__s.html">remodule_var_info_s</a></td></tr>
-<tr class="memdesc:"><td class="mdescLeft">&#160;</td><td class="mdescRight">Information about a variable marked with <a class="el" href="remodule_8h.html#a4fe0e8f583cb6ec196f0141cc0939762">REMODULE_VAR</a>.  <a href="structremodule__var__info__s.html#details">More...</a><br /></td></tr>
-<tr class="separator:"><td class="memSeparator" colspan="2">&#160;</td></tr>
-</table><table class="memberdecls">
 <tr class="heading"><td colspan="2"><h2 class="groupheader"><a name="define-members"></a>
 Macros</h2></td></tr>
-<tr class="memitem:a4fe0e8f583cb6ec196f0141cc0939762"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="remodule_8h.html#a4fe0e8f583cb6ec196f0141cc0939762">REMODULE_VAR</a>(TYPE,  NAME)&#160;&#160;&#160;	<a class="el" href="remodule_8h.html#abaf24e44941d469544fe6dc138f9c8d2">REMODULE_VAR_META</a>(TYPE, NAME, NULL)</td></tr>
+<tr class="memitem:a4fe0e8f583cb6ec196f0141cc0939762"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="remodule_8h.html#a4fe0e8f583cb6ec196f0141cc0939762">REMODULE_VAR</a>(TYPE,  NAME)</td></tr>
 <tr class="memdesc:a4fe0e8f583cb6ec196f0141cc0939762"><td class="mdescLeft">&#160;</td><td class="mdescRight">Mark a global variable in the plugin for state transfer.  <a href="remodule_8h.html#a4fe0e8f583cb6ec196f0141cc0939762">More...</a><br /></td></tr>
 <tr class="separator:a4fe0e8f583cb6ec196f0141cc0939762"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:abaf24e44941d469544fe6dc138f9c8d2"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="remodule_8h.html#abaf24e44941d469544fe6dc138f9c8d2">REMODULE_VAR_META</a>(TYPE,  NAME,  METADATA)</td></tr>
-<tr class="memdesc:abaf24e44941d469544fe6dc138f9c8d2"><td class="mdescLeft">&#160;</td><td class="mdescRight">Mark a global variable in the plugin for state transfer with metadata.  <a href="remodule_8h.html#abaf24e44941d469544fe6dc138f9c8d2">More...</a><br /></td></tr>
-<tr class="separator:abaf24e44941d469544fe6dc138f9c8d2"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae0328ee7751ef8aabb5fbd5e38cbfd5a"><td class="memItemLeft" align="right" valign="top"><a id="ae0328ee7751ef8aabb5fbd5e38cbfd5a"></a>
 #define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="remodule_8h.html#ae0328ee7751ef8aabb5fbd5e38cbfd5a">REMODULE_DYNLIB_EXT</a>&#160;&#160;&#160;&quot;.&lt;dll|dylib|so&gt;&quot;</td></tr>
 <tr class="memdesc:ae0328ee7751ef8aabb5fbd5e38cbfd5a"><td class="mdescLeft">&#160;</td><td class="mdescRight">The platform-dependent file extension for dynamic library. <br /></td></tr>
@@ -105,13 +94,6 @@ Typedefs</h2></td></tr>
 typedef struct remodule_s&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="remodule_8h.html#a7288a5c7bb970746c16f266cf239409d">remodule_t</a></td></tr>
 <tr class="memdesc:a7288a5c7bb970746c16f266cf239409d"><td class="mdescLeft">&#160;</td><td class="mdescRight">A reloadable module. <br /></td></tr>
 <tr class="separator:a7288a5c7bb970746c16f266cf239409d"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a29feda822c5b617f6e31737dc2912295"><td class="memItemLeft" align="right" valign="top"><a id="a29feda822c5b617f6e31737dc2912295"></a>
-typedef struct <a class="el" href="structremodule__var__info__s.html">remodule_var_info_s</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="remodule_8h.html#a29feda822c5b617f6e31737dc2912295">remodule_var_info_t</a></td></tr>
-<tr class="memdesc:a29feda822c5b617f6e31737dc2912295"><td class="mdescLeft">&#160;</td><td class="mdescRight">Information about a variable marked with <a class="el" href="remodule_8h.html#a4fe0e8f583cb6ec196f0141cc0939762">REMODULE_VAR</a>. <br /></td></tr>
-<tr class="separator:a29feda822c5b617f6e31737dc2912295"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a43c2447c15fb0bd4bda70448dd23f4f7"><td class="memItemLeft" align="right" valign="top">typedef bool(*&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="remodule_8h.html#a43c2447c15fb0bd4bda70448dd23f4f7">remodule_var_scanner_fn_t</a>) (const <a class="el" href="remodule_8h.html#a29feda822c5b617f6e31737dc2912295">remodule_var_info_t</a> *var_info, void *userdata)</td></tr>
-<tr class="memdesc:a43c2447c15fb0bd4bda70448dd23f4f7"><td class="mdescLeft">&#160;</td><td class="mdescRight">A callback function to scan variables of a module.  <a href="remodule_8h.html#a43c2447c15fb0bd4bda70448dd23f4f7">More...</a><br /></td></tr>
-<tr class="separator:a43c2447c15fb0bd4bda70448dd23f4f7"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:aa1e053241a66b54fd4a39f1c843ded56"><td class="memItemLeft" align="right" valign="top"><a id="aa1e053241a66b54fd4a39f1c843ded56"></a>
 typedef enum <a class="el" href="remodule_8h.html#a3c24a33e8696b74516f62730c2bd32e3">remodule_op_e</a>&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="remodule_8h.html#aa1e053241a66b54fd4a39f1c843ded56">remodule_op_t</a></td></tr>
 <tr class="memdesc:aa1e053241a66b54fd4a39f1c843ded56"><td class="mdescLeft">&#160;</td><td class="mdescRight">The operation that is being executed. <br /></td></tr>
@@ -138,9 +120,6 @@ Functions</h2></td></tr>
 <tr class="memitem:a0ce11bf3d799984b8b12df3b496f83a1"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="remodule_8h.html#a0ce11bf3d799984b8b12df3b496f83a1">remodule_unload</a> (<a class="el" href="remodule_8h.html#a7288a5c7bb970746c16f266cf239409d">remodule_t</a> *mod)</td></tr>
 <tr class="memdesc:a0ce11bf3d799984b8b12df3b496f83a1"><td class="mdescLeft">&#160;</td><td class="mdescRight">Unload a module.  <a href="remodule_8h.html#a0ce11bf3d799984b8b12df3b496f83a1">More...</a><br /></td></tr>
 <tr class="separator:a0ce11bf3d799984b8b12df3b496f83a1"><td class="memSeparator" colspan="2">&#160;</td></tr>
-<tr class="memitem:a62dee349e521f3ab371b7d590d96fc28"><td class="memItemLeft" align="right" valign="top">void&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="remodule_8h.html#a62dee349e521f3ab371b7d590d96fc28">remodule_scan_vars</a> (<a class="el" href="remodule_8h.html#a7288a5c7bb970746c16f266cf239409d">remodule_t</a> *mod, <a class="el" href="remodule_8h.html#a43c2447c15fb0bd4bda70448dd23f4f7">remodule_var_scanner_fn_t</a> itr, void *userdata)</td></tr>
-<tr class="memdesc:a62dee349e521f3ab371b7d590d96fc28"><td class="mdescLeft">&#160;</td><td class="mdescRight">Scan all variables in a module.  <a href="remodule_8h.html#a62dee349e521f3ab371b7d590d96fc28">More...</a><br /></td></tr>
-<tr class="separator:a62dee349e521f3ab371b7d590d96fc28"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ad8e7aa79ec5c8c013d7182b8f6ee9b89"><td class="memItemLeft" align="right" valign="top"><a id="ad8e7aa79ec5c8c013d7182b8f6ee9b89"></a>
 const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="remodule_8h.html#ad8e7aa79ec5c8c013d7182b8f6ee9b89">remodule_path</a> (<a class="el" href="remodule_8h.html#a7288a5c7bb970746c16f266cf239409d">remodule_t</a> *mod)</td></tr>
 <tr class="memdesc:ad8e7aa79ec5c8c013d7182b8f6ee9b89"><td class="mdescLeft">&#160;</td><td class="mdescRight">Get the path of a module. <br /></td></tr>
@@ -183,15 +162,26 @@ const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" hr
         <tr>
           <td></td>
           <td>)</td>
-          <td></td><td>&#160;&#160;&#160;	<a class="el" href="remodule_8h.html#abaf24e44941d469544fe6dc138f9c8d2">REMODULE_VAR_META</a>(TYPE, NAME, NULL)</td>
+          <td></td><td></td>
         </tr>
       </table>
 </div><div class="memdoc">
-
+<b>Value:</b><div class="fragment"><div class="line">    <span class="keyword">extern</span> TYPE NAME; \</div>
+<div class="line">    const remodule_var_info_t remodule__##NAME##_info = { \</div>
+<div class="line">        .name = #NAME, \</div>
+<div class="line">        .name_length = <span class="keyword">sizeof</span>(#NAME) - 1, \</div>
+<div class="line">        .value_addr = &amp;NAME, \</div>
+<div class="line">        .value_size = <span class="keyword">sizeof</span>(NAME), \</div>
+<div class="line">    }; \</div>
+<div class="line">    REMODULE__SECTION_BEGIN \</div>
+<div class="line">    const remodule_var_info_t* <span class="keyword">const</span> remodule__##NAME##_info_ptr = &amp;remodule__##NAME##_info; \</div>
+<div class="line">    REMODULE__SECTION_END \</div>
+<div class="line">    TYPE NAME</div>
+</div><!-- fragment -->
 <p>Mark a global variable in the plugin for state transfer. </p>
 <p>Example: </p><div class="fragment"><div class="line"><span class="comment">// This variable will be preserved across reloads.</span></div>
 <div class="line"><a class="code" href="remodule_8h.html#a4fe0e8f583cb6ec196f0141cc0939762">REMODULE_VAR</a>(<span class="keywordtype">int</span>, counter) = 0;</div>
-<div class="ttc" id="aremodule_8h_html_a4fe0e8f583cb6ec196f0141cc0939762"><div class="ttname"><a href="remodule_8h.html#a4fe0e8f583cb6ec196f0141cc0939762">REMODULE_VAR</a></div><div class="ttdeci">#define REMODULE_VAR(TYPE, NAME)</div><div class="ttdoc">Mark a global variable in the plugin for state transfer.</div><div class="ttdef"><b>Definition:</b> remodule.h:68</div></div>
+<div class="ttc" id="aremodule_8h_html_a4fe0e8f583cb6ec196f0141cc0939762"><div class="ttname"><a href="remodule_8h.html#a4fe0e8f583cb6ec196f0141cc0939762">REMODULE_VAR</a></div><div class="ttdeci">#define REMODULE_VAR(TYPE, NAME)</div><div class="ttdoc">Mark a global variable in the plugin for state transfer.</div><div class="ttdef"><b>Definition:</b> remodule.h:67</div></div>
 </div><!-- fragment --> <dl class="params"><dt>Parameters</dt><dd>
   <table class="params">
     <tr><td class="paramname">TYPE</td><td>The type of the variable. </td></tr>
@@ -210,98 +200,6 @@ On the other hand, pointers to static data in the plugin or structures allocated
 For more complex cases, make use of <a class="el" href="remodule_8h.html#a3c24a33e8696b74516f62730c2bd32e3ac5e1e7b6f98270c56ce15ba79046ad38">REMODULE_OP_BEFORE_RELOAD</a> and <a class="el" href="remodule_8h.html#a3c24a33e8696b74516f62730c2bd32e3a53993f4f0419b7aff8f435e96531cb46">REMODULE_OP_AFTER_RELOAD</a> to serialize and deserialize. The target for serialization could be the <code>userdata</code> pointer in <a class="el" href="remodule_8h.html#a5ae2d18e9633a611b7c584ded3ccb32d">remodule_entry</a>. </dd></dl>
 <dl class="section examples"><dt>Examples</dt><dd><a class="el" href="example_plugin_8c-example.html#a0">example_plugin.c</a>.</dd>
 </dl>
-
-</div>
-</div>
-<a id="abaf24e44941d469544fe6dc138f9c8d2"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#abaf24e44941d469544fe6dc138f9c8d2">&#9670;&nbsp;</a></span>REMODULE_VAR_META</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">#define REMODULE_VAR_META</td>
-          <td>(</td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname">TYPE, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname">NAME, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">&#160;</td>
-          <td class="paramname">METADATA&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-<b>Value:</b><div class="fragment"><div class="line">    <span class="keyword">extern</span> TYPE NAME; \</div>
-<div class="line">    const <a class="code" href="structremodule__var__info__s.html">remodule_var_info_t</a> remodule__##NAME##_info = { \</div>
-<div class="line">        .<a class="code" href="structremodule__var__info__s.html#af043e39da33187e3a1ebbbf462cb027c">name</a> = #NAME, \</div>
-<div class="line">        .name_length = <span class="keyword">sizeof</span>(#NAME) - 1, \</div>
-<div class="line">        .value_addr = &amp;NAME, \</div>
-<div class="line">        .value_size = <span class="keyword">sizeof</span>(NAME), \</div>
-<div class="line">        .metadata = METADATA, \</div>
-<div class="line">    }; \</div>
-<div class="line">    REMODULE__SECTION_BEGIN \</div>
-<div class="line">    const <a class="code" href="structremodule__var__info__s.html">remodule_var_info_t</a>* <span class="keyword">const</span> remodule__##NAME##_info_ptr = &amp;remodule__##NAME##_info; \</div>
-<div class="line">    REMODULE__SECTION_END \</div>
-<div class="line">    TYPE NAME</div>
-<div class="ttc" id="astructremodule__var__info__s_html"><div class="ttname"><a href="structremodule__var__info__s.html">remodule_var_info_s</a></div><div class="ttdoc">Information about a variable marked with REMODULE_VAR.</div><div class="ttdef"><b>Definition:</b> remodule.h:201</div></div>
-<div class="ttc" id="astructremodule__var__info__s_html_af043e39da33187e3a1ebbbf462cb027c"><div class="ttname"><a href="structremodule__var__info__s.html#af043e39da33187e3a1ebbbf462cb027c">remodule_var_info_s::name</a></div><div class="ttdeci">const char * name</div><div class="ttdoc">The variable's name.</div><div class="ttdef"><b>Definition:</b> remodule.h:203</div></div>
-</div><!-- fragment -->
-<p>Mark a global variable in the plugin for state transfer with metadata. </p>
-<p>This is equivalent to <a class="el" href="remodule_8h.html#a4fe0e8f583cb6ec196f0141cc0939762">REMODULE_VAR</a> but a variable can be associated with some user-defined metadata.</p>
-<p>This metadata is accessible through <a class="el" href="remodule_8h.html#a62dee349e521f3ab371b7d590d96fc28">remodule_scan_vars</a>.</p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">TYPE</td><td>The type of the variable. </td></tr>
-    <tr><td class="paramname">NAME</td><td>The name of the variable. This must be unique within each plugin. </td></tr>
-    <tr><td class="paramname">METADATA</td><td>Metadata to be associated with this variable. This must be a pointer. This value will <b>NOT</b> be preserved across reloads.</td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section see"><dt>See also</dt><dd><a class="el" href="remodule_8h.html#a4fe0e8f583cb6ec196f0141cc0939762" title="Mark a global variable in the plugin for state transfer.">REMODULE_VAR</a> </dd>
-<dd>
-<a class="el" href="remodule_8h.html#a62dee349e521f3ab371b7d590d96fc28" title="Scan all variables in a module.">remodule_scan_vars</a> </dd></dl>
-
-</div>
-</div>
-<h2 class="groupheader">Typedef Documentation</h2>
-<a id="a43c2447c15fb0bd4bda70448dd23f4f7"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a43c2447c15fb0bd4bda70448dd23f4f7">&#9670;&nbsp;</a></span>remodule_var_scanner_fn_t</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">typedef bool(* remodule_var_scanner_fn_t) (const <a class="el" href="remodule_8h.html#a29feda822c5b617f6e31737dc2912295">remodule_var_info_t</a> *var_info, void *userdata)</td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>A callback function to scan variables of a module. </p>
-<p>This will be called on each variables marked with <a class="el" href="remodule_8h.html#a4fe0e8f583cb6ec196f0141cc0939762">REMODULE_VAR</a>.</p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">var_info</td><td>Information about the current variable. </td></tr>
-    <tr><td class="paramname">userdata</td><td>Arbitrary userdata. </td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section return"><dt>Returns</dt><dd>Whether scanning should continue. Return <code>false</code> to stop scanning early.</dd></dl>
-<dl class="section see"><dt>See also</dt><dd><a class="el" href="remodule_8h.html#a62dee349e521f3ab371b7d590d96fc28" title="Scan all variables in a module.">remodule_scan_vars</a> </dd>
-<dd>
-<a class="el" href="remodule_8h.html#a4fe0e8f583cb6ec196f0141cc0939762" title="Mark a global variable in the plugin for state transfer.">REMODULE_VAR</a> </dd></dl>
 
 </div>
 </div>
@@ -435,53 +333,6 @@ The temporary file will be deleted once it's no longer needed. </dd></dl>
 
 <p>Reload a module. </p>
 <p>This will trigger <a class="el" href="remodule_8h.html#a3c24a33e8696b74516f62730c2bd32e3ac5e1e7b6f98270c56ce15ba79046ad38">REMODULE_OP_BEFORE_RELOAD</a> and <a class="el" href="remodule_8h.html#a3c24a33e8696b74516f62730c2bd32e3a53993f4f0419b7aff8f435e96531cb46">REMODULE_OP_AFTER_RELOAD</a> in the module's <a class="el" href="remodule_8h.html#a5ae2d18e9633a611b7c584ded3ccb32d">entrypoint </a>. </p>
-
-</div>
-</div>
-<a id="a62dee349e521f3ab371b7d590d96fc28"></a>
-<h2 class="memtitle"><span class="permalink"><a href="#a62dee349e521f3ab371b7d590d96fc28">&#9670;&nbsp;</a></span>remodule_scan_vars()</h2>
-
-<div class="memitem">
-<div class="memproto">
-      <table class="memname">
-        <tr>
-          <td class="memname">void remodule_scan_vars </td>
-          <td>(</td>
-          <td class="paramtype"><a class="el" href="remodule_8h.html#a7288a5c7bb970746c16f266cf239409d">remodule_t</a> *&#160;</td>
-          <td class="paramname"><em>mod</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype"><a class="el" href="remodule_8h.html#a43c2447c15fb0bd4bda70448dd23f4f7">remodule_var_scanner_fn_t</a>&#160;</td>
-          <td class="paramname"><em>itr</em>, </td>
-        </tr>
-        <tr>
-          <td class="paramkey"></td>
-          <td></td>
-          <td class="paramtype">void *&#160;</td>
-          <td class="paramname"><em>userdata</em>&#160;</td>
-        </tr>
-        <tr>
-          <td></td>
-          <td>)</td>
-          <td></td><td></td>
-        </tr>
-      </table>
-</div><div class="memdoc">
-
-<p>Scan all variables in a module. </p>
-<p>This will call <code>itr</code> on every variables marked with <a class="el" href="remodule_8h.html#a4fe0e8f583cb6ec196f0141cc0939762">REMODULE_VAR</a>.</p>
-<p>This function is also available in a module. In this case, <code>mod</code> is ignored. The function will always iterate over variables of the calling modules.</p>
-<dl class="params"><dt>Parameters</dt><dd>
-  <table class="params">
-    <tr><td class="paramname">mod</td><td>The module to scan. Ignored if called from within a module. </td></tr>
-    <tr><td class="paramname">itr</td><td>The callback function. </td></tr>
-    <tr><td class="paramname">userdata</td><td>Arbitrary userdata to pass to the callback function.</td></tr>
-  </table>
-  </dd>
-</dl>
-<dl class="section see"><dt>See also</dt><dd><a class="el" href="remodule_8h.html#a4fe0e8f583cb6ec196f0141cc0939762" title="Mark a global variable in the plugin for state transfer.">REMODULE_VAR</a> </dd></dl>
 
 </div>
 </div>
