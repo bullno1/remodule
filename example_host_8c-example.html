@@ -84,12 +84,15 @@ $(function() {
 <div class="line"> </div>
 <div class="line"><span class="keywordtype">int</span></div>
 <div class="line">main(<span class="keywordtype">int</span> argc, <span class="keyword">const</span> <span class="keywordtype">char</span>* argv[]) {</div>
+<div class="line">    (void)argc;</div>
+<div class="line">    (void)argv;</div>
+<div class="line"> </div>
 <div class="line">    <span class="comment">// This will be passed verbatim to the plugin</span></div>
 <div class="line">    plugin_interface_t <span class="keyword">interface </span>= {</div>
 <div class="line">        <span class="comment">// Something the plugin can call to communicate with the host</span></div>
 <div class="line">        .request_exit = request_exit,</div>
 <div class="line">    };</div>
-<div class="line">    <a class="code" href="remodule_8h.html#a7288a5c7bb970746c16f266cf239409d">remodule_t</a>* mod = <a name="a0"></a><a class="code" href="remodule_8h.html#a52ce34f4771fd4282958846fe7167f91">remodule_load</a>(<span class="stringliteral">&quot;./plugin&quot;</span> <a name="a1"></a><a class="code" href="remodule_8h.html#ae0328ee7751ef8aabb5fbd5e38cbfd5a">REMODULE_DYNLIB_EXT</a>, &amp;interface);</div>
+<div class="line">    <a class="code" href="remodule_8h.html#a7288a5c7bb970746c16f266cf239409d">remodule_t</a>* mod = <a name="a0"></a><a class="code" href="remodule_8h.html#a52ce34f4771fd4282958846fe7167f91">remodule_load</a>(<span class="stringliteral">&quot;plugin&quot;</span> <a name="a1"></a><a class="code" href="remodule_8h.html#ae0328ee7751ef8aabb5fbd5e38cbfd5a">REMODULE_DYNLIB_EXT</a>, &amp;interface);</div>
 <div class="line">    <a class="code" href="remodule__monitor_8h.html#a602d6ef2806b376dc92b2440e445fe69">remodule_monitor_t</a>* mon = <a name="a2"></a><a class="code" href="remodule__monitor_8h.html#ac153f590256e2db664a81fd03656b453">remodule_monitor</a>(mod);</div>
 <div class="line"> </div>
 <div class="line">    <span class="keywordflow">while</span> (should_run) {</div>
