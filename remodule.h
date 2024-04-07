@@ -24,10 +24,22 @@
 
 //! @cond remodule_internal
 
-#ifdef __cplusplus
-#define REMODULE_API extern "C"
+#ifdef REMODULE_SHARED
+#	if defined(_WIN32) && !defined(__MINGW32__)
+#		ifdef REMODULE_HOST_IMPLEMENTATION
+#			define REMODULE_API __declspec(dllexport)
+#		else
+#			define REMODULE_API __declspec(dllimport)
+#		endif
+#	else
+#		ifdef REMODULE_HOST_IMPLEMENTATION
+#			define REMODULE_API __attribute__((visibility("default")))
+#		else
+#			define REMODULE_API extern
+#		endif
+#	endif
 #else
-#define REMODULE_API
+#	define REMODULE_API extern
 #endif
 
 //! @endcond
@@ -112,8 +124,16 @@
 		} \
 	} while(0)
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 REMODULE_API const char*
 remodule_last_error(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 //! @endcond
 
@@ -150,6 +170,10 @@ typedef enum remodule_op_e {
 	//! After a reload, this will be observed by the **new** plugin instance.
 	REMODULE_OP_AFTER_RELOAD,
 } remodule_op_t;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /**
  * @brief Load a module.
@@ -220,6 +244,10 @@ remodule_userdata(remodule_t* mod);
  */
 REMODULE_API void
 remodule_entry(remodule_op_t op, void* userdata);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
 
