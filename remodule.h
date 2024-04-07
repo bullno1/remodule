@@ -332,6 +332,8 @@ REMODULE_EXPORT remodule_plugin_info_t REMODULE_INFO_SYMBOL = {
 #endif
 #include <windows.h>
 
+#define REMODULE_PATH_MAX MAX_PATH
+
 typedef HMODULE remodule_dynlib_t;
 
 static remodule_dynlib_t
@@ -368,6 +370,27 @@ remodule_dynlib_close(remodule_dynlib_t lib) {
 	DeleteFileA(name_buf);
 }
 
+static char*
+remodule_dynlib_get_path(remodule_dynlib_t lib) {
+	char path_buf[MAX_PATH];
+	size_t size;
+	REMODULE_ASSERT(
+		(size = GetModuleFileNameA(lib, path_buf, sizeof(path_buf))) > 0,
+		"Could not get module name"
+	);
+
+	char* path = malloc(size + 1);
+	memcpy(path, path_buf, size);
+	path[size] = '\0';
+
+	return path;
+}
+
+static void
+remodule_dynlib_free_path(char* path) {
+	free(path);
+}
+
 static char remodule_error_msg_buf[2048];
 
 const char*
@@ -388,6 +411,9 @@ remodule_last_error(void) {
 
 #include <dlfcn.h>
 #include <errno.h>
+#include <link.h>
+
+#define REMODULE_PATH_MAX PATH_MAX
 
 typedef void* remodule_dynlib_t;
 
@@ -406,6 +432,26 @@ remodule_dynlib_close(remodule_dynlib_t lib) {
 	dlclose(lib);
 }
 
+static char*
+remodule_dynlib_get_path(remodule_dynlib_t lib) {
+	struct link_map* link_map;
+	REMODULE_ASSERT(
+		dlinfo(lib, RTLD_DI_LINKMAP, &link_map) == 0,
+		"Could not read library info"
+	);
+
+	size_t size = strlen(link_map->l_name) + 1;
+	char* path = malloc(size);
+	memcpy(path, link_map->l_name, size);
+
+	return path;
+}
+
+static void
+remodule_dynlib_free_path(char* path) {
+	free(path);
+}
+
 const char*
 remodule_last_error(void) {
 	return errno ? strerror(errno) : dlerror();
@@ -421,10 +467,10 @@ typedef struct remodule_tmp_var_storage_s {
 } remodule_tmp_var_storage_t;
 
 struct remodule_s {
-	const char* path;
 	void* userdata;
 	remodule_plugin_info_t info;
 	remodule_dynlib_t lib;
+	char* path;
 };
 
 remodule_t*
@@ -439,8 +485,8 @@ remodule_load(const char* path, void* userdata) {
 
 	remodule_t* mod = malloc(sizeof(remodule_t));
 	*mod = (remodule_t){
-		.path = path,
 		.userdata = userdata,
+		.path = remodule_dynlib_get_path(lib),
 		.info = *info,
 		.lib = lib,
 	};
@@ -538,6 +584,7 @@ remodule_reload(remodule_t* mod) {
 void
 remodule_unload(remodule_t* mod) {
 	mod->info.entry(REMODULE_OP_UNLOAD, mod->userdata);
+	remodule_dynlib_free_path(mod->path);
 	remodule_dynlib_close(mod->lib);
 	free(mod);
 }

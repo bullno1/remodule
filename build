@@ -2,7 +2,6 @@
 
 cc \
 	-O3 \
-	-fsanitize=undefined,address \
 	-std=c11 -Wextra -Werror -pedantic \
 	-fPIC \
 	-shared \
@@ -15,6 +14,6 @@ cc \
 cc \
 	-O3 \
 	-std=c11 -Wextra -Werror -pedantic \
-	-fsanitize=undefined,address \
+	-Wl,-rpath,"\$ORIGIN" \
 	-o host \
 	example_host.c

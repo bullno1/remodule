@@ -20,13 +20,16 @@ request_exit(void) {
 
 int
 main(int argc, const char* argv[]) {
+	(void)argc;
+	(void)argv;
+
 	//! [Load plugin]
 	// This will be passed verbatim to the plugin
 	plugin_interface_t interface = {
 		// Something the plugin can call to communicate with the host
 		.request_exit = request_exit,
 	};
-	remodule_t* mod = remodule_load("./plugin" REMODULE_DYNLIB_EXT, &interface);
+	remodule_t* mod = remodule_load("plugin" REMODULE_DYNLIB_EXT, &interface);
 	//! [Load plugin]
 	remodule_monitor_t* mon = remodule_monitor(mod);
 
