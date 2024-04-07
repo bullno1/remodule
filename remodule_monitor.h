@@ -166,7 +166,9 @@ remodule_dirmon_acquire(const char* path) {
 	*dirmon = (remodule_dirmon_t){
 		.num_monitors = 1,
 		.watchd = inotify_add_watch(
-			remodule_dirmon_root.inotifyfd, dir_name, IN_ALL_EVENTS
+			remodule_dirmon_root.inotifyfd,
+			dir_name,
+			IN_CLOSE_WRITE | IN_MOVED_TO
 		),
 	};
 	REMODULE_ASSERT(dirmon->watchd, "Could not add watch");
