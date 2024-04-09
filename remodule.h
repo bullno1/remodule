@@ -334,61 +334,77 @@ REMODULE_EXPORT remodule_plugin_info_t REMODULE_INFO_SYMBOL = {
 
 #define REMODULE_PATH_MAX MAX_PATH
 
-typedef HMODULE remodule_dynlib_t;
+typedef struct remodule_dynlib_info_s {
+	HMODULE handle;
+	char watch_path[];
+} remodule_dynlib_info_t;
+
+typedef remodule_dynlib_info_t* remodule_dynlib_t;
 
 static remodule_dynlib_t
 remodule_dynlib_open(const char* path) {
+	// Load once to find the real absolute path
+	HMODULE module = LoadLibraryExA(
+		path,
+		NULL,
+		DONT_RESOLVE_DLL_REFERENCES
+	);
+	if (module == NULL) { return NULL; }
+
+	char watch_path[MAX_PATH];
+	DWORD watch_path_len = GetModuleFileNameA(module, watch_path, sizeof(watch_path));
+	REMODULE_ASSERT(watch_path_len > 0, "Could not get module name");
+	FreeLibrary(module);
+
+	// Create a temporary file name
 	char dir_buf[MAX_PATH];
 	char name_buf[MAX_PATH];
 	char tmp_name_buf[MAX_PATH];
 	char* file_part;
 
-	// Create a temporary file name
-	GetFullPathNameA(path, sizeof(dir_buf), dir_buf, &file_part);
+	GetFullPathNameA(watch_path, sizeof(dir_buf), dir_buf, &file_part);
 	size_t name_len = strlen(file_part);
 	memcpy(name_buf, file_part, name_len);
 	*file_part = '\0';
 	GetTempFileNameA(dir_buf, name_buf, 0, tmp_name_buf);
 
 	// Copy the file over
-	REMODULE_ASSERT(CopyFileA(path, tmp_name_buf, FALSE), "Could not create temporary file");
+	REMODULE_ASSERT(CopyFileA(watch_path, tmp_name_buf, FALSE), "Could not create temporary file");
 
-	return LoadLibraryA(tmp_name_buf);
+	// Load the temporary file
+	module = LoadLibraryA(tmp_name_buf);
+	if (module == NULL) { return NULL; }
+
+	remodule_dynlib_t lib = malloc(sizeof(remodule_dynlib_info_t) + watch_path_len + 1);
+	lib->handle = module;
+	memcpy(lib->watch_path, watch_path, watch_path_len);
+	lib->watch_path[watch_path_len] = '\0';
+	return lib;
 }
 
 static void*
 remodule_dynlib_find(remodule_dynlib_t lib, const char* name) {
-	return (void*)GetProcAddress(lib, name);
+	return (void*)GetProcAddress(lib->handle, name);
 }
 
 static void
 remodule_dynlib_close(remodule_dynlib_t lib) {
 	char name_buf[MAX_PATH];
-	REMODULE_ASSERT(GetModuleFileNameA(lib, name_buf, sizeof(name_buf)) > 0, "Could not get module name");
+	REMODULE_ASSERT(GetModuleFileNameA(lib->handle, name_buf, sizeof(name_buf)) > 0, "Could not get module name");
 
-	FreeLibrary(lib);
+	FreeLibrary(lib->handle);
 	DeleteFileA(name_buf);
+	free(lib);
 }
 
 static char*
 remodule_dynlib_get_path(remodule_dynlib_t lib) {
-	char path_buf[MAX_PATH];
-	size_t size;
-	REMODULE_ASSERT(
-		(size = GetModuleFileNameA(lib, path_buf, sizeof(path_buf))) > 0,
-		"Could not get module name"
-	);
-
-	char* path = malloc(size + 1);
-	memcpy(path, path_buf, size);
-	path[size] = '\0';
-
-	return path;
+	return lib->watch_path;
 }
 
 static void
 remodule_dynlib_free_path(char* path) {
-	free(path);
+	(void)path;
 }
 
 static char remodule_error_msg_buf[2048];
