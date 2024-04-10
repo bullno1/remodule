@@ -138,49 +138,53 @@ struct remodule_monitor_s {
 
 static remodule_dirmon_t*
 remodule_dirmon_acquire(const char* path) {
-	char name_buf[PATH_MAX];
-	char* real_path = realpath(path, name_buf);
+	char* real_path = realpath(path, NULL);
 	char* dir_name = dirname(real_path);
 
+	remodule_dirmon_t* dirmon = NULL;
 	for (
 		remodule_dirmon_link_t* itr = remodule_dirmon_root.link.next;
 		itr != &remodule_dirmon_root.link;
 		itr = itr->next
 	) {
-		remodule_dirmon_t* dirmon = (remodule_dirmon_t*)((char*)itr - offsetof(remodule_dirmon_t, link));
-		if (strcmp(dir_name, dirmon->path) == 0) {
-			++dirmon->num_monitors;
-			return dirmon;
+		remodule_dirmon_t* dirmon_itr = (remodule_dirmon_t*)((char*)itr - offsetof(remodule_dirmon_t, link));
+		if (strcmp(dir_name, dirmon_itr->path) == 0) {
+			++dirmon_itr->num_monitors;
+			dirmon = dirmon_itr;
+			break;
 		}
 	}
 
-	if (remodule_dirmon_root.inotifyfd < 0) {
-		remodule_dirmon_root.inotifyfd = inotify_init1(IN_NONBLOCK | IN_CLOEXEC);
-		REMODULE_ASSERT(remodule_dirmon_root.inotifyfd > 0, "Could not create inotify");
+	if (dirmon == NULL) {
+		if (remodule_dirmon_root.inotifyfd < 0) {
+			remodule_dirmon_root.inotifyfd = inotify_init1(IN_NONBLOCK | IN_CLOEXEC);
+			REMODULE_ASSERT(remodule_dirmon_root.inotifyfd > 0, "Could not create inotify");
+		}
+
+		size_t dir_name_len = strlen(dir_name);
+		remodule_dirmon_t* dirmon = malloc(
+			sizeof(remodule_dirmon_t) + dir_name_len + 1
+		);
+		*dirmon = (remodule_dirmon_t){
+			.num_monitors = 1,
+			.watchd = inotify_add_watch(
+				remodule_dirmon_root.inotifyfd,
+				dir_name,
+				IN_CLOSE_WRITE | IN_MOVED_TO
+			),
+		};
+		REMODULE_ASSERT(dirmon->watchd, "Could not add watch");
+
+		dirmon->link.next = remodule_dirmon_root.link.next;
+		remodule_dirmon_root.link.next->prev = &dirmon->link;
+		dirmon->link.prev = &remodule_dirmon_root.link;
+		remodule_dirmon_root.link.next = &dirmon->link;
+
+		memcpy(dirmon->path, dir_name, dir_name_len);
+		dirmon->path[dir_name_len] = '\0';
 	}
 
-	size_t dir_name_len = strlen(dir_name);
-	remodule_dirmon_t* dirmon = malloc(
-		sizeof(remodule_dirmon_t) + dir_name_len + 1
-	);
-	*dirmon = (remodule_dirmon_t){
-		.num_monitors = 1,
-		.watchd = inotify_add_watch(
-			remodule_dirmon_root.inotifyfd,
-			dir_name,
-			IN_CLOSE_WRITE | IN_MOVED_TO
-		),
-	};
-	REMODULE_ASSERT(dirmon->watchd, "Could not add watch");
-
-	dirmon->link.next = remodule_dirmon_root.link.next;
-	remodule_dirmon_root.link.next->prev = &dirmon->link;
-	dirmon->link.prev = &remodule_dirmon_root.link;
-	remodule_dirmon_root.link.next = &dirmon->link;
-
-	memcpy(dirmon->path, dir_name, dir_name_len);
-	dirmon->path[dir_name_len] = '\0';
-
+	free(real_path);
 	return dirmon;
 }
 
