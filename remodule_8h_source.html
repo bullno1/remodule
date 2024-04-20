@@ -355,12 +355,12 @@ $(function() {
 <div class="line"><a name="l00399"></a><span class="lineno">  399</span>&#160; </div>
 <div class="line"><a name="l00400"></a><span class="lineno">  400</span>&#160;<span class="keyword">static</span> <span class="keywordtype">char</span>*</div>
 <div class="line"><a name="l00401"></a><span class="lineno">  401</span>&#160;remodule_dynlib_get_path(remodule_dynlib_t lib) {</div>
-<div class="line"><a name="l00402"></a><span class="lineno">  402</span>&#160;    <span class="keywordflow">return</span> lib-&gt;watch_path;</div>
+<div class="line"><a name="l00402"></a><span class="lineno">  402</span>&#160;    <span class="keywordflow">return</span> _strdup(lib-&gt;watch_path);</div>
 <div class="line"><a name="l00403"></a><span class="lineno">  403</span>&#160;}</div>
 <div class="line"><a name="l00404"></a><span class="lineno">  404</span>&#160; </div>
 <div class="line"><a name="l00405"></a><span class="lineno">  405</span>&#160;<span class="keyword">static</span> <span class="keywordtype">void</span></div>
 <div class="line"><a name="l00406"></a><span class="lineno">  406</span>&#160;remodule_dynlib_free_path(<span class="keywordtype">char</span>* path) {</div>
-<div class="line"><a name="l00407"></a><span class="lineno">  407</span>&#160;    (void)path;</div>
+<div class="line"><a name="l00407"></a><span class="lineno">  407</span>&#160;    free(path);</div>
 <div class="line"><a name="l00408"></a><span class="lineno">  408</span>&#160;}</div>
 <div class="line"><a name="l00409"></a><span class="lineno">  409</span>&#160; </div>
 <div class="line"><a name="l00410"></a><span class="lineno">  410</span>&#160;<span class="keyword">static</span> <span class="keywordtype">char</span> remodule_error_msg_buf[2048];</div>
