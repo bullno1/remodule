@@ -380,16 +380,22 @@ remodule_dirmon_update_all(void) {
 			remodule_dirmon_t* dirmon = (remodule_dirmon_t*)((char*)itr - offsetof(remodule_dirmon_t, link));
 
 			if (&dirmon->overlapped == overlapped) {
-				FILE_NOTIFY_INFORMATION
-				for (
-					remodule_monitor_link_t* mon_itr = dirmon->monitors.next;
-					mon_itr != &dirmon->monitors;
-					mon_itr = mon_itr->next
-				) {
-					remodule_monitor_t* monitor = (remodule_monitor_t*)((char*)mon_itr - offsetof(remodule_monitor_t, link));
-					if (strcmp(monitor->name, event->name) == 0) {
-						++monitor->latest_version;
+				FILE_NOTIFY_INFORMATION notification_itr = (FILE_NOTIFY_INFORMATION*)dirmon->notification_buf;
+				while (notification_itr->NextEntryOffset != NULL) {
+					for (
+						remodule_monitor_link_t* mon_itr = dirmon->monitors.next;
+						mon_itr != &dirmon->monitors;
+						mon_itr = mon_itr->next
+					) {
+						remodule_monitor_t* monitor = (remodule_monitor_t*)((char*)mon_itr - offsetof(remodule_monitor_t, link));
+						if (wcscmp(monitor->name, notification_itr->FileName) == 0) {
+							++monitor->latest_version;
+						}
 					}
+
+					notification_itr = (FILE_NOTIFY_INFORMATION*)(
+						(char*)notification_itr + notification_itr->NextEntryOffset
+					);
 				}
 
 				// Queue another read
@@ -430,10 +436,26 @@ remodule_monitor(remodule_t* mod) {
 		if (path[i] == '/') { break; }
 	}
 	++i;
-	size_t extra_size = len - i + 1;
+	int extra_size = len - i + 1;
 	const char* filename = path + i;
 #else
-#error Not implemented
+	wchar_t wpath[MAX_PATH + 1];
+	int len = MultiByteToWideChar(
+		CP_UTF8,
+		0,
+		path,
+		-1,
+		wpath,
+		sizeof(wpath) / sizeof(wpath[0])
+	);
+	wpath[len] = 0;
+	int i;
+	for (i = len - 1; i > 0; --i) {
+		if (path[i] == '\\') { break; }
+	}
+	++i;
+	int extra_size = len - i + 1;
+	const wchar_t* filename = wpath + i;
 #endif
 
 	remodule_monitor_t* mon = malloc(sizeof(remodule_monitor_t) + extra_size);
