@@ -82,11 +82,16 @@ typedef struct remodule_dirmon_link_s {
 	struct remodule_dirmon_link_s* prev;
 } remodule_dirmon_link_t;
 
+typedef struct remodule_monitor_link_s {
+	struct remodule_monitor_link_s* next;
+	struct remodule_monitor_link_s* prev;
+} remodule_monitor_link_t;
+
 typedef struct remodule_dirmon_s {
 	remodule_dirmon_link_t link;
+	remodule_monitor_link_t monitors;
 
 	int num_monitors;
-	int version;
 
 #if defined(__linux__)
 	int watchd;
@@ -122,15 +127,18 @@ static remodule_dirmon_root_t remodule_dirmon_root = {
 };
 
 struct remodule_monitor_s {
-	int dirmon_version;
+	remodule_monitor_link_t link;
+
+	int loaded_version;
+	int latest_version;
 	int root_version;
 	remodule_dirmon_t* dirmon;
 	remodule_t* mod;
 
 #if defined(__linux__)
-	struct timespec last_modified;
+	char name[];
 #elif defined(_WIN32)
-	FILETIME last_modified;
+	wchar_t name[];
 #endif
 };
 
@@ -181,6 +189,9 @@ remodule_dirmon_acquire(const char* path) {
 		remodule_dirmon_root.link.next->prev = &dirmon->link;
 		dirmon->link.prev = &remodule_dirmon_root.link;
 		remodule_dirmon_root.link.next = &dirmon->link;
+
+		dirmon->monitors.next = &dirmon->monitors;
+		dirmon->monitors.prev = &dirmon->monitors;
 	}
 
 	free(real_path);
@@ -228,7 +239,17 @@ remodule_dirmon_update_all(void) {
 				remodule_dirmon_t* dirmon = (remodule_dirmon_t*)((char*)itr - offsetof(remodule_dirmon_t, link));
 
 				if (dirmon->watchd == event->wd) {
-					++dirmon->version;
+					for (
+						remodule_monitor_link_t* mon_itr = dirmon->monitors.next;
+						mon_itr != &dirmon->monitors;
+						mon_itr = mon_itr->next
+					) {
+						remodule_monitor_t* monitor = (remodule_monitor_t*)((char*)mon_itr - offsetof(remodule_monitor_t, link));
+						if (strcmp(monitor->name, event->name) == 0) {
+							++monitor->latest_version;
+						}
+					}
+
 					break;
 				}
 			}
@@ -281,6 +302,9 @@ remodule_dirmon_acquire(const char* path) {
 	remodule_dirmon_root.link.next->prev = &dirmon->link;
 	dirmon->link.prev = &remodule_dirmon_root.link;
 	remodule_dirmon_root.link.next = &dirmon->link;
+
+	dirmon->monitors.next = &dirmon->monitors;
+	dirmon->monitors.prev = &dirmon->monitors;
 
 	memcpy(dirmon->path, name_buf, dir_name_len);
 	dirmon->path[dir_name_len] = '\0';
@@ -356,7 +380,17 @@ remodule_dirmon_update_all(void) {
 			remodule_dirmon_t* dirmon = (remodule_dirmon_t*)((char*)itr - offsetof(remodule_dirmon_t, link));
 
 			if (&dirmon->overlapped == overlapped) {
-				++dirmon->version;
+				FILE_NOTIFY_INFORMATION
+				for (
+					remodule_monitor_link_t* mon_itr = dirmon->monitors.next;
+					mon_itr != &dirmon->monitors;
+					mon_itr = mon_itr->next
+				) {
+					remodule_monitor_t* monitor = (remodule_monitor_t*)((char*)mon_itr - offsetof(remodule_monitor_t, link));
+					if (strcmp(monitor->name, event->name) == 0) {
+						++monitor->latest_version;
+					}
+				}
 
 				// Queue another read
 				REMODULE_ASSERT(
@@ -389,37 +423,31 @@ remodule_dirmon_update_all(void) {
 remodule_monitor_t*
 remodule_monitor(remodule_t* mod) {
 	const char* path = remodule_path(mod);
+#ifdef __linux__
+	int len = (int)strlen(path);
+	int i;
+	for (i = len - 1; i > 0; --i) {
+		if (path[i] == '/') { break; }
+	}
+	++i;
+	size_t extra_size = len - i + 1;
+	const char* filename = path + i;
+#else
+#error Not implemented
+#endif
 
-	remodule_monitor_t* mon = malloc(sizeof(remodule_monitor_t));
+	remodule_monitor_t* mon = malloc(sizeof(remodule_monitor_t) + extra_size);
 	remodule_dirmon_t* dirmon = remodule_dirmon_acquire(path);
 	*mon = (remodule_monitor_t){
-		.dirmon_version = dirmon->version,
 		.root_version = remodule_dirmon_root.version,
 		.dirmon = dirmon,
 		.mod = mod,
 	};
-
-#if defined(__linux__)
-	struct stat stat_buf;
-	REMODULE_ASSERT(stat(path, &stat_buf) == 0, "Could not stat file");
-	mon->last_modified = stat_buf.st_mtim;
-#elif defined(_WIN32)
-	HANDLE file = CreateFileA(
-		path,
-		0,
-		FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE,
-		NULL,
-		OPEN_EXISTING,
-		FILE_ATTRIBUTE_NORMAL,
-		NULL
-	);
-	REMODULE_ASSERT(file != INVALID_HANDLE_VALUE, "Could not stat file");
-	REMODULE_ASSERT(
-		GetFileTime(file, NULL, NULL, &mon->last_modified),
-		"Could not stat file"
-	);
-	CloseHandle(file);
-#endif
+	memcpy(mon->name, filename, extra_size);
+	mon->link.next = &dirmon->monitors;
+	mon->link.prev = dirmon->monitors.prev;
+	dirmon->monitors.prev->next = &mon->link;
+	dirmon->monitors.prev = &mon->link;
 
 	return mon;
 }
@@ -441,64 +469,18 @@ remodule_should_reload(remodule_monitor_t* mon) {
 	}
 	mon->root_version = remodule_dirmon_root.version;
 
-	if (mon->dirmon_version == mon->dirmon->version) {
+	if (mon->loaded_version == mon->latest_version) {
 		return false;
+	} else {
+		mon->loaded_version = mon->latest_version;
+		return true;
 	}
-	mon->dirmon_version = mon->dirmon->version;
-	bool should_reload = false;
-
-#if defined(__linux__)
-	struct stat stat_buf;
-
-	if (
-		stat(remodule_path(mon->mod), &stat_buf) == 0
-		&& (
-			mon->last_modified.tv_sec < stat_buf.st_mtim.tv_sec
-			|| (
-				mon->last_modified.tv_sec == stat_buf.st_mtim.tv_sec
-				&& mon->last_modified.tv_nsec < stat_buf.st_mtim.tv_nsec
-			)
-		)
-	) {
-		mon->last_modified = stat_buf.st_mtim;
-		should_reload = true;
-	}
-#elif defined(_WIN32)
-	HANDLE file = CreateFileA(
-		remodule_path(mon->mod),
-		0,
-		FILE_SHARE_DELETE | FILE_SHARE_READ | FILE_SHARE_WRITE,
-		NULL,
-		OPEN_EXISTING,
-		FILE_ATTRIBUTE_NORMAL,
-		NULL
-	);
-
-	if (file != INVALID_HANDLE_VALUE) {
-		FILETIME last_modified;
-		if (
-			GetFileTime(file, NULL, NULL, &last_modified)
-			&& (
-				mon->last_modified.dwHighDateTime < last_modified.dwHighDateTime
-				|| (
-					mon->last_modified.dwHighDateTime == last_modified.dwHighDateTime
-					&& mon->last_modified.dwLowDateTime < last_modified.dwLowDateTime
-				)
-			)
-		) {
-			mon->last_modified = last_modified;
-			should_reload = true;
-		}
-
-		CloseHandle(file);
-	}
-#endif
-
-	return should_reload;
 }
 
 void
 remodule_unmonitor(remodule_monitor_t* mon) {
+	mon->link.prev->next = mon->link.next;
+	mon->link.next->prev = mon->link.prev;
 	remodule_dirmon_release(mon->dirmon);
 	free(mon);
 }

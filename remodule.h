@@ -470,7 +470,8 @@ remodule_dynlib_free_path(char* path) {
 
 const char*
 remodule_last_error(void) {
-	return errno ? strerror(errno) : dlerror();
+	const char* dlerror_str = dlerror();
+	return dlerror_str != NULL ? dlerror_str : strerror(errno);
 }
 
 #endif
