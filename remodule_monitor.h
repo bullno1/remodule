@@ -380,22 +380,26 @@ remodule_dirmon_update_all(void) {
 			remodule_dirmon_t* dirmon = (remodule_dirmon_t*)((char*)itr - offsetof(remodule_dirmon_t, link));
 
 			if (&dirmon->overlapped == overlapped) {
-				FILE_NOTIFY_INFORMATION notification_itr = (FILE_NOTIFY_INFORMATION*)dirmon->notification_buf;
-				while (notification_itr->NextEntryOffset != NULL) {
+				FILE_NOTIFY_INFORMATION* notification_itr = (FILE_NOTIFY_INFORMATION*)dirmon->notification_buf;
+				while (true) {
 					for (
 						remodule_monitor_link_t* mon_itr = dirmon->monitors.next;
 						mon_itr != &dirmon->monitors;
 						mon_itr = mon_itr->next
 					) {
 						remodule_monitor_t* monitor = (remodule_monitor_t*)((char*)mon_itr - offsetof(remodule_monitor_t, link));
-						if (wcscmp(monitor->name, notification_itr->FileName) == 0) {
+						if (wcsncmp(monitor->name, notification_itr->FileName, notification_itr->FileNameLength / sizeof(wchar_t)) == 0) {
 							++monitor->latest_version;
 						}
 					}
 
-					notification_itr = (FILE_NOTIFY_INFORMATION*)(
-						(char*)notification_itr + notification_itr->NextEntryOffset
-					);
+					if (notification_itr->NextEntryOffset == 0) {
+						break;
+					} else {
+						notification_itr = (FILE_NOTIFY_INFORMATION*)(
+							(char*)notification_itr + notification_itr->NextEntryOffset
+						);
+					}
 				}
 
 				// Queue another read
@@ -465,7 +469,7 @@ remodule_monitor(remodule_t* mod) {
 		.dirmon = dirmon,
 		.mod = mod,
 	};
-	memcpy(mon->name, filename, extra_size);
+	memcpy(mon->name, filename, extra_size * sizeof(filename[0]));
 	mon->link.next = &dirmon->monitors;
 	mon->link.prev = dirmon->monitors.prev;
 	dirmon->monitors.prev->next = &mon->link;

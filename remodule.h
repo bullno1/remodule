@@ -399,12 +399,12 @@ remodule_dynlib_close(remodule_dynlib_t lib) {
 
 static char*
 remodule_dynlib_get_path(remodule_dynlib_t lib) {
-	return lib->watch_path;
+	return _strdup(lib->watch_path);
 }
 
 static void
 remodule_dynlib_free_path(char* path) {
-	(void)path;
+	free(path);
 }
 
 static char remodule_error_msg_buf[2048];
