@@ -78,14 +78,14 @@
  */
 #define REMODULE_VAR(TYPE, NAME) \
 	extern TYPE NAME; \
-	const remodule_var_info_t remodule__##NAME##_info = { \
+	const remodule_var_info_t REMODULE__META_NAME(NAME) = { \
 		.name = #NAME, \
 		.name_length = sizeof(#NAME) - 1, \
 		.value_addr = &NAME, \
 		.value_size = sizeof(NAME), \
 	}; \
 	REMODULE__SECTION_BEGIN \
-	const remodule_var_info_t* const remodule__##NAME##_info_ptr = &remodule__##NAME##_info; \
+	const remodule_var_info_t* const REMODULE__META_PTR_NAME(NAME) = &REMODULE__META_NAME(NAME); \
 	REMODULE__SECTION_END \
 	TYPE NAME
 
@@ -115,6 +115,9 @@
 #ifndef REMODULE_ASSERT
 #include <stdlib.h>
 #include <stdio.h>
+
+#define REMODULE__META_NAME(NAME) remodule__##NAME##_info
+#define REMODULE__META_PTR_NAME(NAME) remodule__##NAME##_info_ptr
 
 #define REMODULE_ASSERT(COND, MSG) \
 	do { \
