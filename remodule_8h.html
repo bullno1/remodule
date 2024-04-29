@@ -167,14 +167,14 @@ const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" hr
       </table>
 </div><div class="memdoc">
 <b>Value:</b><div class="fragment"><div class="line">    <span class="keyword">extern</span> TYPE NAME; \</div>
-<div class="line">    const remodule_var_info_t remodule__##NAME##_info = { \</div>
+<div class="line">    const remodule_var_info_t REMODULE__META_NAME(NAME) = { \</div>
 <div class="line">        .name = #NAME, \</div>
 <div class="line">        .name_length = <span class="keyword">sizeof</span>(#NAME) - 1, \</div>
 <div class="line">        .value_addr = &amp;NAME, \</div>
 <div class="line">        .value_size = <span class="keyword">sizeof</span>(NAME), \</div>
 <div class="line">    }; \</div>
 <div class="line">    REMODULE__SECTION_BEGIN \</div>
-<div class="line">    const remodule_var_info_t* <span class="keyword">const</span> remodule__##NAME##_info_ptr = &amp;remodule__##NAME##_info; \</div>
+<div class="line">    const remodule_var_info_t* <span class="keyword">const</span> REMODULE__META_PTR_NAME(NAME) = &amp;REMODULE__META_NAME(NAME); \</div>
 <div class="line">    REMODULE__SECTION_END \</div>
 <div class="line">    TYPE NAME</div>
 </div><!-- fragment -->
