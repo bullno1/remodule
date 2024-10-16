@@ -462,7 +462,7 @@ remodule_monitor(remodule_t* mod) {
 	const wchar_t* filename = wpath + i;
 #endif
 
-	remodule_monitor_t* mon = malloc(sizeof(remodule_monitor_t) + extra_size);
+	remodule_monitor_t* mon = malloc(sizeof(remodule_monitor_t) + extra_size * sizeof(filename[0]));
 	remodule_dirmon_t* dirmon = remodule_dirmon_acquire(path);
 	*mon = (remodule_monitor_t){
 		.root_version = remodule_dirmon_root.version,
