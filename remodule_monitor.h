@@ -5,6 +5,9 @@
  * @file
  * @brief A single header addon to make reloading automatic.
  *
+ * **This module is now deprecated and no longer maintained**.
+ * Instead, use bresmon: https://github.com/bullno1/libs/blob/master/bresmon.h.
+ *
  * In **exactly one** source file of the host program, define `REMODULE_MONITOR_IMPLEMENTATION` before including remodule_monitor.h:
  * @snippet example_host.c Include remodule_monitor
  */

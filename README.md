@@ -80,7 +80,7 @@ remodule_t* mod = remodule_load("./plugin" REMODULE_DYNLIB_EXT, &interface);
 ```
 
 Subsequenly, `remodule_reload` can be used to reload a plugin.
-To make this automatic, refer to [remodule_monitor.h](remodule_monitor.h).
+To make this automatic, use [bresmon](https://github.com/bullno1/libs/blob/master/bresmon.h).
 
 When the plugin is no longer needed, unload it with `remodule_unload`.
 

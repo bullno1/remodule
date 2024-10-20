@@ -26,6 +26,9 @@ project "host"
   kind "ConsoleApp"
   language "C"
   targetdir "bin/%{cfg.buildcfg}"
+  includedirs {
+    "libs",
+  }
 
   files {
    "remodule.h",

@@ -1,8 +1,3 @@
-//! [Include remodule_monitor]
-#define REMODULE_MONITOR_IMPLEMENTATION
-#include "remodule_monitor.h"
-//! [Include remodule_monitor]
-
 //! [Include remodule]
 #define REMODULE_HOST_IMPLEMENTATION
 #include "remodule.h"
@@ -10,12 +5,19 @@
 
 #include <stdio.h>
 #include "example_shared.h"
+#define BRESMON_IMPLEMENTATION
+#include <bresmon.h>
 
 static bool should_run = true;
 
 static void
 request_exit(void) {
 	should_run = false;
+}
+
+static void
+reload_module(const char* path, void* mod) {
+	remodule_reload(mod);
 }
 
 int
@@ -31,17 +33,20 @@ main(int argc, const char* argv[]) {
 	};
 	remodule_t* mod = remodule_load("plugin" REMODULE_DYNLIB_EXT, &interface);
 	//! [Load plugin]
-	remodule_monitor_t* mon = remodule_monitor(mod);
+
+	// Autmoatic reload
+	bresmon_t* mon = bresmon_create(NULL);
+	bresmon_watch(mon, remodule_path(mod), reload_module, mod);
 
 	while (should_run) {
 		interface.update(interface.plugin_data);
 
-		if (remodule_check(mon)) {
+		if (bresmon_check(mon, false)) {
 			fprintf(stderr, "Reloaded %s\n", remodule_path(mod));
 		}
 	}
 
-	remodule_unmonitor(mon);
+	bresmon_destroy(mon);
 	remodule_unload(mod);
 
 	return 0;
