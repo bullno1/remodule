@@ -66,20 +66,24 @@ $(function() {
 <div class="title">example_host.c</div>  </div>
 </div><!--header-->
 <div class="contents">
-<div class="fragment"><div class="line"><span class="preprocessor">#define REMODULE_MONITOR_IMPLEMENTATION</span></div>
-<div class="line"><span class="preprocessor">#include &quot;<a class="code" href="remodule__monitor_8h.html">remodule_monitor.h</a>&quot;</span></div>
-<div class="line"> </div>
-<div class="line"><span class="preprocessor">#define REMODULE_HOST_IMPLEMENTATION</span></div>
+<div class="fragment"><div class="line"><span class="preprocessor">#define REMODULE_HOST_IMPLEMENTATION</span></div>
 <div class="line"><span class="preprocessor">#include &quot;<a class="code" href="remodule_8h.html">remodule.h</a>&quot;</span></div>
 <div class="line"> </div>
 <div class="line"><span class="preprocessor">#include &lt;stdio.h&gt;</span></div>
 <div class="line"><span class="preprocessor">#include &quot;example_shared.h&quot;</span></div>
+<div class="line"><span class="preprocessor">#define BRESMON_IMPLEMENTATION</span></div>
+<div class="line"><span class="preprocessor">#include &lt;bresmon.h&gt;</span></div>
 <div class="line"> </div>
 <div class="line"><span class="keyword">static</span> <span class="keywordtype">bool</span> should_run = <span class="keyword">true</span>;</div>
 <div class="line"> </div>
 <div class="line"><span class="keyword">static</span> <span class="keywordtype">void</span></div>
 <div class="line">request_exit(<span class="keywordtype">void</span>) {</div>
 <div class="line">    should_run = <span class="keyword">false</span>;</div>
+<div class="line">}</div>
+<div class="line"> </div>
+<div class="line"><span class="keyword">static</span> <span class="keywordtype">void</span></div>
+<div class="line">reload_module(<span class="keyword">const</span> <span class="keywordtype">char</span>* path, <span class="keywordtype">void</span>* mod) {</div>
+<div class="line">    <a name="a0"></a><a class="code" href="remodule_8h.html#afee5692857ef207ee9540aab28169bec">remodule_reload</a>(mod);</div>
 <div class="line">}</div>
 <div class="line"> </div>
 <div class="line"><span class="keywordtype">int</span></div>
@@ -92,19 +96,22 @@ $(function() {
 <div class="line">        <span class="comment">// Something the plugin can call to communicate with the host</span></div>
 <div class="line">        .request_exit = request_exit,</div>
 <div class="line">    };</div>
-<div class="line">    <a class="code" href="remodule_8h.html#a7288a5c7bb970746c16f266cf239409d">remodule_t</a>* mod = <a name="a0"></a><a class="code" href="remodule_8h.html#a52ce34f4771fd4282958846fe7167f91">remodule_load</a>(<span class="stringliteral">&quot;plugin&quot;</span> <a name="a1"></a><a class="code" href="remodule_8h.html#ae0328ee7751ef8aabb5fbd5e38cbfd5a">REMODULE_DYNLIB_EXT</a>, &amp;interface);</div>
-<div class="line">    <a class="code" href="remodule__monitor_8h.html#a602d6ef2806b376dc92b2440e445fe69">remodule_monitor_t</a>* mon = <a name="a2"></a><a class="code" href="remodule__monitor_8h.html#ac153f590256e2db664a81fd03656b453">remodule_monitor</a>(mod);</div>
+<div class="line">    <a class="code" href="remodule_8h.html#a7288a5c7bb970746c16f266cf239409d">remodule_t</a>* mod = <a name="a1"></a><a class="code" href="remodule_8h.html#a52ce34f4771fd4282958846fe7167f91">remodule_load</a>(<span class="stringliteral">&quot;plugin&quot;</span> <a name="a2"></a><a class="code" href="remodule_8h.html#ae0328ee7751ef8aabb5fbd5e38cbfd5a">REMODULE_DYNLIB_EXT</a>, &amp;interface);</div>
+<div class="line"> </div>
+<div class="line">    <span class="comment">// Autmoatic reload</span></div>
+<div class="line">    bresmon_t* mon = bresmon_create(NULL);</div>
+<div class="line">    bresmon_watch(mon, <a name="a3"></a><a class="code" href="remodule_8h.html#ad8e7aa79ec5c8c013d7182b8f6ee9b89">remodule_path</a>(mod), reload_module, mod);</div>
 <div class="line"> </div>
 <div class="line">    <span class="keywordflow">while</span> (should_run) {</div>
 <div class="line">        interface.update(interface.plugin_data);</div>
 <div class="line"> </div>
-<div class="line">        <span class="keywordflow">if</span> (<a name="a3"></a><a class="code" href="remodule__monitor_8h.html#aacedaf424a4ac0f49361d5862163dbd3">remodule_check</a>(mon)) {</div>
-<div class="line">            fprintf(stderr, <span class="stringliteral">&quot;Reloaded %s\n&quot;</span>, <a name="a4"></a><a class="code" href="remodule_8h.html#ad8e7aa79ec5c8c013d7182b8f6ee9b89">remodule_path</a>(mod));</div>
+<div class="line">        <span class="keywordflow">if</span> (bresmon_check(mon, <span class="keyword">false</span>)) {</div>
+<div class="line">            fprintf(stderr, <span class="stringliteral">&quot;Reloaded %s\n&quot;</span>, <a class="code" href="remodule_8h.html#ad8e7aa79ec5c8c013d7182b8f6ee9b89">remodule_path</a>(mod));</div>
 <div class="line">        }</div>
 <div class="line">    }</div>
 <div class="line"> </div>
-<div class="line">    <a name="a5"></a><a class="code" href="remodule__monitor_8h.html#a43af2df1bcc9e4d24e5d3690c88aa095">remodule_unmonitor</a>(mon);</div>
-<div class="line">    <a name="a6"></a><a class="code" href="remodule_8h.html#a0ce11bf3d799984b8b12df3b496f83a1">remodule_unload</a>(mod);</div>
+<div class="line">    bresmon_destroy(mon);</div>
+<div class="line">    <a name="a4"></a><a class="code" href="remodule_8h.html#a0ce11bf3d799984b8b12df3b496f83a1">remodule_unload</a>(mod);</div>
 <div class="line"> </div>
 <div class="line">    <span class="keywordflow">return</span> 0;</div>
 <div class="line">}</div>
@@ -114,11 +121,7 @@ $(function() {
 <div class="ttc" id="aremodule_8h_html_a7288a5c7bb970746c16f266cf239409d"><div class="ttname"><a href="remodule_8h.html#a7288a5c7bb970746c16f266cf239409d">remodule_t</a></div><div class="ttdeci">struct remodule_s remodule_t</div><div class="ttdoc">A reloadable module.</div><div class="ttdef"><b>Definition:</b> remodule.h:161</div></div>
 <div class="ttc" id="aremodule_8h_html_ad8e7aa79ec5c8c013d7182b8f6ee9b89"><div class="ttname"><a href="remodule_8h.html#ad8e7aa79ec5c8c013d7182b8f6ee9b89">remodule_path</a></div><div class="ttdeci">const char * remodule_path(remodule_t *mod)</div><div class="ttdoc">Get the path of a module.</div></div>
 <div class="ttc" id="aremodule_8h_html_ae0328ee7751ef8aabb5fbd5e38cbfd5a"><div class="ttname"><a href="remodule_8h.html#ae0328ee7751ef8aabb5fbd5e38cbfd5a">REMODULE_DYNLIB_EXT</a></div><div class="ttdeci">#define REMODULE_DYNLIB_EXT</div><div class="ttdoc">The platform-dependent file extension for dynamic library.</div><div class="ttdef"><b>Definition:</b> remodule.h:149</div></div>
-<div class="ttc" id="aremodule__monitor_8h_html"><div class="ttname"><a href="remodule__monitor_8h.html">remodule_monitor.h</a></div><div class="ttdoc">A single header addon to make reloading automatic.</div></div>
-<div class="ttc" id="aremodule__monitor_8h_html_a43af2df1bcc9e4d24e5d3690c88aa095"><div class="ttname"><a href="remodule__monitor_8h.html#a43af2df1bcc9e4d24e5d3690c88aa095">remodule_unmonitor</a></div><div class="ttdeci">void remodule_unmonitor(remodule_monitor_t *mon)</div><div class="ttdoc">Stop monitoring.</div></div>
-<div class="ttc" id="aremodule__monitor_8h_html_a602d6ef2806b376dc92b2440e445fe69"><div class="ttname"><a href="remodule__monitor_8h.html#a602d6ef2806b376dc92b2440e445fe69">remodule_monitor_t</a></div><div class="ttdeci">struct remodule_monitor_s remodule_monitor_t</div><div class="ttdoc">A monitor handle.</div><div class="ttdef"><b>Definition:</b> remodule_monitor.h:16</div></div>
-<div class="ttc" id="aremodule__monitor_8h_html_aacedaf424a4ac0f49361d5862163dbd3"><div class="ttname"><a href="remodule__monitor_8h.html#aacedaf424a4ac0f49361d5862163dbd3">remodule_check</a></div><div class="ttdeci">bool remodule_check(remodule_monitor_t *mon)</div><div class="ttdoc">Check for reload.</div></div>
-<div class="ttc" id="aremodule__monitor_8h_html_ac153f590256e2db664a81fd03656b453"><div class="ttname"><a href="remodule__monitor_8h.html#ac153f590256e2db664a81fd03656b453">remodule_monitor</a></div><div class="ttdeci">remodule_monitor_t * remodule_monitor(remodule_t *mod)</div><div class="ttdoc">Start monitoring.</div></div>
+<div class="ttc" id="aremodule_8h_html_afee5692857ef207ee9540aab28169bec"><div class="ttname"><a href="remodule_8h.html#afee5692857ef207ee9540aab28169bec">remodule_reload</a></div><div class="ttdeci">void remodule_reload(remodule_t *mod)</div><div class="ttdoc">Reload a module.</div></div>
 </div><!-- fragment --> </div><!-- contents -->
 <!-- start footer part -->
 <hr class="footer"/><address class="footer"><small>
