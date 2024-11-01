@@ -13,6 +13,7 @@ cc \
 
 cc \
 	-O3 \
+	-I libs/ \
 	-std=c11 -Wextra -Werror -pedantic \
 	-Wl,-rpath,"\$ORIGIN" \
 	-o host \
