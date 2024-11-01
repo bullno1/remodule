@@ -16,11 +16,12 @@ var searchData=
   ['remodule_5fop_5ft_13',['remodule_op_t',['../remodule_8h.html#aa1e053241a66b54fd4a39f1c843ded56',1,'remodule.h']]],
   ['remodule_5fop_5funload_14',['REMODULE_OP_UNLOAD',['../remodule_8h.html#a3c24a33e8696b74516f62730c2bd32e3a585215fc43ffaa5e3f456eceeb620b83',1,'remodule.h']]],
   ['remodule_5fpath_15',['remodule_path',['../remodule_8h.html#ad8e7aa79ec5c8c013d7182b8f6ee9b89',1,'remodule.h']]],
-  ['remodule_5freload_16',['remodule_reload',['../remodule_8h.html#afee5692857ef207ee9540aab28169bec',1,'remodule.h']]],
-  ['remodule_5fshould_5freload_17',['remodule_should_reload',['../remodule__monitor_8h.html#a80194f70ef1a0ace884237fde39107be',1,'remodule_monitor.h']]],
-  ['remodule_5ft_18',['remodule_t',['../remodule_8h.html#a7288a5c7bb970746c16f266cf239409d',1,'remodule.h']]],
-  ['remodule_5funload_19',['remodule_unload',['../remodule_8h.html#a0ce11bf3d799984b8b12df3b496f83a1',1,'remodule.h']]],
-  ['remodule_5funmonitor_20',['remodule_unmonitor',['../remodule__monitor_8h.html#a43af2df1bcc9e4d24e5d3690c88aa095',1,'remodule_monitor.h']]],
-  ['remodule_5fuserdata_21',['remodule_userdata',['../remodule_8h.html#aaf98c012781fb088015a08f695923d4c',1,'remodule.h']]],
-  ['remodule_5fvar_22',['REMODULE_VAR',['../remodule_8h.html#a4fe0e8f583cb6ec196f0141cc0939762',1,'remodule.h']]]
+  ['remodule_5fpersist_5fvar_16',['REMODULE_PERSIST_VAR',['../remodule_8h.html#a852e88d7c671972c81aec41724bcd559',1,'remodule.h']]],
+  ['remodule_5freload_17',['remodule_reload',['../remodule_8h.html#afee5692857ef207ee9540aab28169bec',1,'remodule.h']]],
+  ['remodule_5fshould_5freload_18',['remodule_should_reload',['../remodule__monitor_8h.html#a80194f70ef1a0ace884237fde39107be',1,'remodule_monitor.h']]],
+  ['remodule_5ft_19',['remodule_t',['../remodule_8h.html#a7288a5c7bb970746c16f266cf239409d',1,'remodule.h']]],
+  ['remodule_5funload_20',['remodule_unload',['../remodule_8h.html#a0ce11bf3d799984b8b12df3b496f83a1',1,'remodule.h']]],
+  ['remodule_5funmonitor_21',['remodule_unmonitor',['../remodule__monitor_8h.html#a43af2df1bcc9e4d24e5d3690c88aa095',1,'remodule_monitor.h']]],
+  ['remodule_5fuserdata_22',['remodule_userdata',['../remodule_8h.html#aaf98c012781fb088015a08f695923d4c',1,'remodule.h']]],
+  ['remodule_5fvar_23',['REMODULE_VAR',['../remodule_8h.html#a4fe0e8f583cb6ec196f0141cc0939762',1,'remodule.h']]]
 ];
