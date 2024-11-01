@@ -78,6 +78,10 @@
  */
 #define REMODULE_VAR(TYPE, NAME) \
 	extern TYPE NAME; \
+	REMODULE_PERSIST_VAR(NAME) \
+	TYPE NAME
+
+#define REMODULE_PERSIST_VAR(NAME) \
 	const remodule_var_info_t REMODULE__META_NAME(NAME) = { \
 		.name = #NAME, \
 		.name_length = sizeof(#NAME) - 1, \
@@ -87,7 +91,6 @@
 	REMODULE__SECTION_BEGIN \
 	const remodule_var_info_t* const REMODULE__META_PTR_NAME(NAME) = &REMODULE__META_NAME(NAME); \
 	REMODULE__SECTION_END \
-	TYPE NAME
 
 #if defined(_MSC_VER)
 #	define REMODULE__SECTION_BEGIN \
