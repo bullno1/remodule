@@ -45,7 +45,7 @@
 //! @endcond
 
 /**
- * @brief Mark a global variable in the plugin for state transfer.
+ * @brief Declare a variable in the plugin that is eligible for state transfer.
  *
  * Example:
  * @snippet example_plugin.c State transfer
@@ -81,6 +81,14 @@
 	REMODULE_PERSIST_VAR(NAME) \
 	TYPE NAME
 
+/**
+ * @brief Mark an existing variable for state transfer.
+ *
+ * This can be used for global variables in 3rd party libraries without
+ * modifying its source.
+ *
+ * @see REMODULE_VAR
+ */
 #define REMODULE_PERSIST_VAR(NAME) \
 	const remodule_var_info_t REMODULE__META_NAME(NAME) = { \
 		.name = #NAME, \
