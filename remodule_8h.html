@@ -83,6 +83,8 @@ Macros</h2></td></tr>
 <tr class="memitem:a4fe0e8f583cb6ec196f0141cc0939762"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="remodule_8h.html#a4fe0e8f583cb6ec196f0141cc0939762">REMODULE_VAR</a>(TYPE,  NAME)</td></tr>
 <tr class="memdesc:a4fe0e8f583cb6ec196f0141cc0939762"><td class="mdescLeft">&#160;</td><td class="mdescRight">Mark a global variable in the plugin for state transfer.  <a href="remodule_8h.html#a4fe0e8f583cb6ec196f0141cc0939762">More...</a><br /></td></tr>
 <tr class="separator:a4fe0e8f583cb6ec196f0141cc0939762"><td class="memSeparator" colspan="2">&#160;</td></tr>
+<tr class="memitem:a852e88d7c671972c81aec41724bcd559"><td class="memItemLeft" align="right" valign="top">#define&#160;</td><td class="memItemRight" valign="bottom"><b>REMODULE_PERSIST_VAR</b>(NAME)</td></tr>
+<tr class="separator:a852e88d7c671972c81aec41724bcd559"><td class="memSeparator" colspan="2">&#160;</td></tr>
 <tr class="memitem:ae0328ee7751ef8aabb5fbd5e38cbfd5a"><td class="memItemLeft" align="right" valign="top"><a id="ae0328ee7751ef8aabb5fbd5e38cbfd5a"></a>
 #define&#160;</td><td class="memItemRight" valign="bottom"><a class="el" href="remodule_8h.html#ae0328ee7751ef8aabb5fbd5e38cbfd5a">REMODULE_DYNLIB_EXT</a>&#160;&#160;&#160;&quot;.&lt;dll|dylib|so&gt;&quot;</td></tr>
 <tr class="memdesc:ae0328ee7751ef8aabb5fbd5e38cbfd5a"><td class="mdescLeft">&#160;</td><td class="mdescRight">The platform-dependent file extension for dynamic library. <br /></td></tr>
@@ -141,6 +143,33 @@ const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" hr
 </div><!-- fragment --><p> A plugin must define an <a class="el" href="remodule_8h.html#a5ae2d18e9633a611b7c584ded3ccb32d">entrypoint </a>.</p>
 <p>If a plugin has any global state that needs to be preserved across reloads, mark those with <a class="el" href="remodule_8h.html#a4fe0e8f583cb6ec196f0141cc0939762">REMODULE_VAR</a>. </p>
 </div><h2 class="groupheader">Macro Definition Documentation</h2>
+<a id="a852e88d7c671972c81aec41724bcd559"></a>
+<h2 class="memtitle"><span class="permalink"><a href="#a852e88d7c671972c81aec41724bcd559">&#9670;&nbsp;</a></span>REMODULE_PERSIST_VAR</h2>
+
+<div class="memitem">
+<div class="memproto">
+      <table class="memname">
+        <tr>
+          <td class="memname">#define REMODULE_PERSIST_VAR</td>
+          <td>(</td>
+          <td class="paramtype">&#160;</td>
+          <td class="paramname">NAME</td><td>)</td>
+          <td></td>
+        </tr>
+      </table>
+</div><div class="memdoc">
+<b>Value:</b><div class="fragment"><div class="line">    <span class="keyword">const</span> remodule_var_info_t REMODULE__META_NAME(NAME) = { \</div>
+<div class="line">        .name = #NAME, \</div>
+<div class="line">        .name_length = <span class="keyword">sizeof</span>(#NAME) - 1, \</div>
+<div class="line">        .value_addr = &amp;NAME, \</div>
+<div class="line">        .value_size = <span class="keyword">sizeof</span>(NAME), \</div>
+<div class="line">    }; \</div>
+<div class="line">    REMODULE__SECTION_BEGIN \</div>
+<div class="line">    const remodule_var_info_t* <span class="keyword">const</span> REMODULE__META_PTR_NAME(NAME) = &amp;REMODULE__META_NAME(NAME); \</div>
+<div class="line">    REMODULE__SECTION_END \</div>
+</div><!-- fragment -->
+</div>
+</div>
 <a id="a4fe0e8f583cb6ec196f0141cc0939762"></a>
 <h2 class="memtitle"><span class="permalink"><a href="#a4fe0e8f583cb6ec196f0141cc0939762">&#9670;&nbsp;</a></span>REMODULE_VAR</h2>
 
@@ -167,15 +196,7 @@ const char *&#160;</td><td class="memItemRight" valign="bottom"><a class="el" hr
       </table>
 </div><div class="memdoc">
 <b>Value:</b><div class="fragment"><div class="line">    <span class="keyword">extern</span> TYPE NAME; \</div>
-<div class="line">    const remodule_var_info_t REMODULE__META_NAME(NAME) = { \</div>
-<div class="line">        .name = #NAME, \</div>
-<div class="line">        .name_length = <span class="keyword">sizeof</span>(#NAME) - 1, \</div>
-<div class="line">        .value_addr = &amp;NAME, \</div>
-<div class="line">        .value_size = <span class="keyword">sizeof</span>(NAME), \</div>
-<div class="line">    }; \</div>
-<div class="line">    REMODULE__SECTION_BEGIN \</div>
-<div class="line">    const remodule_var_info_t* <span class="keyword">const</span> REMODULE__META_PTR_NAME(NAME) = &amp;REMODULE__META_NAME(NAME); \</div>
-<div class="line">    REMODULE__SECTION_END \</div>
+<div class="line">    REMODULE_PERSIST_VAR(NAME) \</div>
 <div class="line">    TYPE NAME</div>
 </div><!-- fragment -->
 <p>Mark a global variable in the plugin for state transfer. </p>
