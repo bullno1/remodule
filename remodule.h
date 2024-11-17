@@ -123,6 +123,13 @@
 
 //! @cond remodule_internal
 
+typedef struct remodule_var_info_s {
+	const char* name;
+	size_t name_length;
+	void* value_addr;
+	size_t value_size;
+} remodule_var_info_t;
+
 #ifndef REMODULE_ASSERT
 #include <stdlib.h>
 #include <stdio.h>
@@ -274,13 +281,6 @@ remodule_entry(remodule_op_t op, void* userdata);
 #define REMODULE_INFO_SYMBOL_STR REMODULE_STRINGIFY(REMODULE_INFO_SYMBOL)
 #define REMODULE_STRINGIFY(X) REMODULE_STRINGIFY2(X)
 #define REMODULE_STRINGIFY2(X) #X
-
-typedef struct remodule_var_info_s {
-	const char* name;
-	size_t name_length;
-	void* value_addr;
-	size_t value_size;
-} remodule_var_info_t;
 
 typedef struct remodule_plugin_info_s {
 	const remodule_var_info_t* const* var_info_begin;
