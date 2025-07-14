@@ -87,17 +87,36 @@
  * This can be used for global variables in 3rd party libraries without
  * modifying its source.
  *
+ * @param NAME variable name
+ *
  * @see REMODULE_VAR
  */
 #define REMODULE_PERSIST_VAR(NAME) \
-	const remodule_var_info_t REMODULE__META_NAME(NAME) = { \
-		.name = #NAME, \
-		.name_length = sizeof(#NAME) - 1, \
+	REMODULE_PERSIST_VAR_EX(NAME,)
+
+/**
+ * @brief Mark an existing variable for state transfer.
+ *
+ * This can be used for global variables in 3rd party libraries without
+ * modifying its source.
+ *
+ * The @a NAMESPACE argument can be used so that **static** variables in different
+ * translation units can have the same name.
+ *
+ * @param NAME variable name
+ * @param NAMESPACE A namespace to put the metadata into
+ *
+ * @see REMODULE_VAR_EX
+ */
+#define REMODULE_PERSIST_VAR_EX(NAME, NAMESPACE) \
+	const remodule_var_info_t REMODULE__META_NAME(NAME, NAMESPACE) = { \
+		.name = #NAMESPACE "_" #NAME, \
+		.name_length = sizeof(#NAMESPACE "_" #NAME) - 1, \
 		.value_addr = &NAME, \
 		.value_size = sizeof(NAME), \
 	}; \
 	REMODULE__SECTION_BEGIN \
-	const remodule_var_info_t* const REMODULE__META_PTR_NAME(NAME) = &REMODULE__META_NAME(NAME); \
+	const remodule_var_info_t* const REMODULE__META_PTR_NAME(NAME, NAMESPACE) = &REMODULE__META_NAME(NAME, NAMESPACE); \
 	REMODULE__SECTION_END \
 
 #if defined(_MSC_VER)
@@ -134,8 +153,8 @@ typedef struct remodule_var_info_s {
 #include <stdlib.h>
 #include <stdio.h>
 
-#define REMODULE__META_NAME(NAME) remodule__##NAME##_info
-#define REMODULE__META_PTR_NAME(NAME) remodule__##NAME##_info_ptr
+#define REMODULE__META_NAME(NAME, NAMESPACE) remodule__##NAMESPACE##_##NAME##_info
+#define REMODULE__META_PTR_NAME(NAME, NAMESPACE) remodule__##NAMESPACE##_##NAME##_info_ptr
 
 #define REMODULE_ASSERT(COND, MSG) \
 	do { \
