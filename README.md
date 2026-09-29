@@ -104,3 +104,14 @@ However, VS 2022 seems to disallow building while the debugger is attached.
 Use [doxygen](https://doxygen.nl) to generate the documentation.
 
 An online version can be found at https://bullno1.github.io/remodule.
+
+# Separate debug info
+
+When using [mold](https://github.com/rui314/mold/tree/main) with [`--separate-debug-file`](https://github.com/rui314/mold/blob/main/docs/mold.md#:~:text=%2D%2Dseparate%2Ddebug%2Dfile), there is a race condition.
+A change monitor such as [bresmon](https://github.com/bullno1/libs/blob/master/bresmon.h) usually only waits for the completion of the module file (i.e: the `.so` file).
+The debug info file might still be in the process of being written and thus, incomplete.
+A reload would trigger the debugger to load the debug info immediately.
+Sometimes, esp in a large build with a lot of symbols, this would mean either rejection or corrupt debug info.
+
+The script [wait-debug-info.py](wait-debug-info.py) can be loaded into either gdb or lldb to make the debugger wait for the debug file to be complete.
+The instruction can be found at the beginning of the script.
