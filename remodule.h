@@ -234,6 +234,16 @@ extern "C" {
  *   Therefore, the directory containing the module must be writable.
  * @remarks
  *   The temporary file will be deleted once it's no longer needed.
+ * @remarks
+ *   If the module has a PDB, a copy of that will also be made next to
+ *   the original.
+ *   It is named by writing a number over the end of the original name (e.g:
+ *   `plugin.pd0` for `plugin.pdb`).
+ *   The temporary module is patched to link to this copy.
+ *   This leaves the original PDB free to be rewritten by the linker while a
+ *   debugger is attached.
+ *   The copy is deleted when the module is unloaded or reloaded.
+ *   However, this will fail if a debugger is still locking the file.
  */
 REMODULE_API remodule_t*
 remodule_load(const char* path, void* userdata);
@@ -364,15 +374,207 @@ REMODULE_EXPORT remodule_plugin_info_t REMODULE_INFO_SYMBOL = {
 #define WIN32_LEAN_AND_MEAN
 #endif
 #include <windows.h>
+#include <stdbool.h>
+#include <stdio.h>
 
 #define REMODULE_PATH_MAX MAX_PATH
 
 typedef struct remodule_dynlib_info_s {
 	HMODULE handle;
+	char pdb_path[MAX_PATH];
 	char watch_path[];
 } remodule_dynlib_info_t;
 
 typedef remodule_dynlib_info_t* remodule_dynlib_t;
+
+// The CodeView record which refers to a PDB
+typedef struct remodule_pdb_ref_s {
+	DWORD signature;
+	GUID guid;
+	DWORD age;
+	char path[];
+} remodule_pdb_ref_t;
+
+static void*
+remodule_image_at(char* image, size_t image_size, size_t offset, size_t size) {
+	if (offset > image_size || size > image_size - offset) { return NULL; }
+	return image + offset;
+}
+
+static const char*
+remodule_file_part(const char* path) {
+	const char* file_part = path;
+	for (const char* itr = path; *itr != '\0'; ++itr) {
+		if (*itr == '\\' || *itr == '/' || *itr == ':') { file_part = itr + 1; }
+	}
+	return file_part;
+}
+
+static char*
+remodule_find_pdb_ref(char* image, size_t image_size, size_t* capacity) {
+	IMAGE_DOS_HEADER* dos_header = remodule_image_at(image, image_size, 0, sizeof(IMAGE_DOS_HEADER));
+	if (
+		dos_header == NULL
+		|| dos_header->e_magic != IMAGE_DOS_SIGNATURE
+		|| dos_header->e_lfanew < 0
+	) {
+		return NULL;
+	}
+
+	// The module is loaded into this process so it has the same header layout
+	size_t nt_headers_offset = (size_t)dos_header->e_lfanew;
+	IMAGE_NT_HEADERS* nt_headers = remodule_image_at(image, image_size, nt_headers_offset, sizeof(IMAGE_NT_HEADERS));
+	if (
+		nt_headers == NULL
+		|| nt_headers->Signature != IMAGE_NT_SIGNATURE
+		|| nt_headers->OptionalHeader.Magic != IMAGE_NT_OPTIONAL_HDR_MAGIC
+		|| nt_headers->OptionalHeader.NumberOfRvaAndSizes <= IMAGE_DIRECTORY_ENTRY_DEBUG
+	) {
+		return NULL;
+	}
+
+	// The debug directory is located by its virtual address
+	IMAGE_DATA_DIRECTORY debug_dir = nt_headers->OptionalHeader.DataDirectory[IMAGE_DIRECTORY_ENTRY_DEBUG];
+	size_t num_sections = nt_headers->FileHeader.NumberOfSections;
+	IMAGE_SECTION_HEADER* sections = remodule_image_at(
+		image, image_size,
+		nt_headers_offset
+			+ offsetof(IMAGE_NT_HEADERS, OptionalHeader)
+			+ nt_headers->FileHeader.SizeOfOptionalHeader,
+		num_sections * sizeof(IMAGE_SECTION_HEADER)
+	);
+	if (sections == NULL) { return NULL; }
+
+	IMAGE_DEBUG_DIRECTORY* entries = NULL;
+	for (size_t i = 0; i < num_sections; ++i) {
+		if (
+			debug_dir.VirtualAddress >= sections[i].VirtualAddress
+			&& debug_dir.VirtualAddress - sections[i].VirtualAddress < sections[i].SizeOfRawData
+		) {
+			entries = remodule_image_at(
+				image, image_size,
+				(size_t)sections[i].PointerToRawData + (debug_dir.VirtualAddress - sections[i].VirtualAddress),
+				debug_dir.Size
+			);
+			break;
+		}
+	}
+	if (entries == NULL) { return NULL; }
+
+	size_t num_entries = debug_dir.Size / sizeof(IMAGE_DEBUG_DIRECTORY);
+	for (size_t i = 0; i < num_entries; ++i) {
+		if (
+			entries[i].Type != IMAGE_DEBUG_TYPE_CODEVIEW
+			|| entries[i].SizeOfData <= sizeof(remodule_pdb_ref_t)
+		) {
+			continue;
+		}
+
+		remodule_pdb_ref_t* ref = remodule_image_at(image, image_size, entries[i].PointerToRawData, entries[i].SizeOfData);
+		size_t path_capacity = entries[i].SizeOfData - sizeof(remodule_pdb_ref_t);
+		if (
+			ref != NULL
+			&& ref->signature == 0x53445352 // RSDS
+			&& memchr(ref->path, '\0', path_capacity) != NULL
+		) {
+			*capacity = path_capacity;
+			return ref->path;
+		}
+	}
+
+	return NULL;
+}
+
+// A debugger locks the PDB of a loaded module, even after the module is
+// unloaded, so the linker can not write to it.
+// Give the temporary module its own copy of the PDB and leave the original
+// alone.
+// When this is not possible, the module is left as is.
+static void
+remodule_dynlib_redirect_pdb(const char* module_path, const char* dir, char* pdb_path) {
+	pdb_path[0] = '\0';
+
+	HANDLE file = CreateFileA(
+		module_path,
+		GENERIC_READ | GENERIC_WRITE,
+		0,
+		NULL,
+		OPEN_EXISTING,
+		FILE_ATTRIBUTE_NORMAL,
+		NULL
+	);
+	if (file == INVALID_HANDLE_VALUE) { return; }
+
+	LARGE_INTEGER file_size = { 0 };
+	GetFileSizeEx(file, &file_size);
+	HANDLE mapping = CreateFileMappingA(file, NULL, PAGE_READWRITE, 0, 0, NULL);
+	char* image = mapping != NULL ? MapViewOfFile(mapping, FILE_MAP_WRITE, 0, 0, 0) : NULL;
+
+	size_t ref_capacity = 0;
+	char* ref = image != NULL
+		? remodule_find_pdb_ref(image, (size_t)file_size.QuadPart, &ref_capacity)
+		: NULL;
+	if (ref != NULL) {
+		// The PDB might have been moved along with the module
+		char moved_path[MAX_PATH];
+		const char* original_path = ref;
+		if (
+			GetFileAttributesA(ref) == INVALID_FILE_ATTRIBUTES
+			&& snprintf(moved_path, sizeof(moved_path), "%s%s", dir, remodule_file_part(ref)) < (int)sizeof(moved_path)
+		) {
+			original_path = moved_path;
+		}
+
+		// The copy is made next to the original.
+		// Its name is made by writing a number over the end of the original
+		// name, extension included.
+		// This keeps the length so the new path always fits in the old record.
+		size_t original_path_len = strlen(original_path);
+		size_t name_len = strlen(remodule_file_part(original_path));
+		int max_copies = 1;
+		for (size_t i = 0; i < name_len && i < 3; ++i) { max_copies *= 10; }
+
+		// The copies made for the previous loads might still be held by a
+		// debugger so every load needs a new name
+		bool copied = false;
+		for (int i = 0; i < max_copies && name_len > 0 && original_path_len < MAX_PATH; ++i) {
+			memcpy(pdb_path, original_path, original_path_len + 1);
+			char* digit = pdb_path + original_path_len;
+			int number = i;
+			do {
+				*(--digit) = (char)('0' + number % 10);
+				number /= 10;
+			} while (number > 0);
+
+			copied = CopyFileA(original_path, pdb_path, TRUE) != FALSE;
+			if (copied) { break; }
+
+			DWORD error = GetLastError();
+			if (error != ERROR_FILE_EXISTS && error != ERROR_ALREADY_EXISTS) { break; }
+		}
+
+		// When the PDB was moved, the new path might not fit in the old record.
+		// A debugger also looks for the PDB next to the module so the file
+		// name alone is enough.
+		const char* new_ref = pdb_path;
+		if (strlen(new_ref) >= ref_capacity) {
+			new_ref = remodule_file_part(pdb_path);
+		}
+
+		if (copied && strlen(new_ref) < ref_capacity) {
+			size_t new_ref_len = strlen(new_ref);
+			memcpy(ref, new_ref, new_ref_len);
+			memset(ref + new_ref_len, 0, ref_capacity - new_ref_len);
+		} else {
+			if (copied) { DeleteFileA(pdb_path); }
+			pdb_path[0] = '\0';
+		}
+	}
+
+	if (image != NULL) { UnmapViewOfFile(image); }
+	if (mapping != NULL) { CloseHandle(mapping); }
+	CloseHandle(file);
+}
 
 static remodule_dynlib_t
 remodule_dynlib_open(const char* path) {
@@ -404,12 +606,22 @@ remodule_dynlib_open(const char* path) {
 	// Copy the file over
 	REMODULE_ASSERT(CopyFileA(watch_path, tmp_name_buf, FALSE), "Could not create temporary file");
 
+	char pdb_path[MAX_PATH];
+	remodule_dynlib_redirect_pdb(tmp_name_buf, dir_buf, pdb_path);
+
 	// Load the temporary file
 	module = LoadLibraryA(tmp_name_buf);
-	if (module == NULL) { return NULL; }
+	if (module == NULL) {
+		DWORD error = GetLastError();
+		DeleteFileA(tmp_name_buf);
+		if (pdb_path[0] != '\0') { DeleteFileA(pdb_path); }
+		SetLastError(error);
+		return NULL;
+	}
 
 	remodule_dynlib_t lib = malloc(sizeof(remodule_dynlib_info_t) + watch_path_len + 1);
 	lib->handle = module;
+	memcpy(lib->pdb_path, pdb_path, sizeof(pdb_path));
 	memcpy(lib->watch_path, watch_path, watch_path_len);
 	lib->watch_path[watch_path_len] = '\0';
 	return lib;
@@ -427,6 +639,8 @@ remodule_dynlib_close(remodule_dynlib_t lib) {
 
 	FreeLibrary(lib->handle);
 	DeleteFileA(name_buf);
+	// This fails when a debugger is still locking the file
+	if (lib->pdb_path[0] != '\0') { DeleteFileA(lib->pdb_path); }
 	free(lib);
 }
 

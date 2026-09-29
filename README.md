@@ -98,6 +98,13 @@ At any point in time, you can modify [example_plugin.c](example_plugin.c), rebui
 
 The workflow is similar to Linux.
 However, VS 2022 seems to disallow building while the debugger is attached.
+Build the plugin from outside of the IDE instead (e.g: using `msbuild`).
+
+A debugger locks the PDB of every module it has seen, which would prevent the linker from writing a new one.
+To avoid this, re:module makes a temporary copy of the DLL and patch it to refer to a temporary copy of the PDB (e.g: `plugin.pd0` for `plugin.pdb`).
+The copy is deleted when the plugin is unloaded or reloaded.
+A debugger might still be holding the file at that point so some copies can be left behind.
+They are safe to delete once the debugger is detached.
 
 # Documentation
 
