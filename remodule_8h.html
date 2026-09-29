@@ -391,7 +391,9 @@ For more complex cases, make use of <a class="el" href="remodule_8h.html#a3c24a3
 <dl class="section return"><dt>Returns</dt><dd>The reloadable module.</dd></dl>
 <dl class="section remark"><dt>Remarks</dt><dd>On Windows, due to file locking, instead of loading the module directly, a temporary copy will be made. This will be loaded instead of the original module. Therefore, the directory containing the module must be writable. </dd>
 <dd>
-The temporary file will be deleted once it's no longer needed. </dd></dl>
+The temporary file will be deleted once it's no longer needed. </dd>
+<dd>
+If the module has a PDB, a copy of that will also be made next to the original. It is named by writing a number over the end of the original name (e.g: <code>plugin.pd0</code> for <code>plugin.pdb</code>). The temporary module is patched to link to this copy. This leaves the original PDB free to be rewritten by the linker while a debugger is attached. The copy is deleted when the module is unloaded or reloaded. However, this will fail if a debugger is still locking the file. </dd></dl>
 <dl class="section examples"><dt>Examples</dt><dd><a class="el" href="example_host_8c-example.html#a1">example_host.c</a>.</dd>
 </dl>
 
