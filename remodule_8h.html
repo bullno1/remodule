@@ -215,7 +215,7 @@ const char *&#160;</td><td class="memItemRight" valign="bottom"><b>remodule_path
 <div class="line">    }; \</div>
 <div class="line">    REMODULE__SECTION_BEGIN \</div>
 <div class="line">    const remodule_var_info_t* <span class="keyword">const</span> REMODULE__META_PTR_NAME(NAME, NAMESPACE) = &amp;REMODULE__META_NAME(NAME, NAMESPACE); \</div>
-<div class="line">    REMODULE__SECTION_END \</div>
+<div class="line">    REMODULE__SECTION_END(REMODULE__META_PTR_NAME(NAME, NAMESPACE))</div>
 </div><!-- fragment -->
 <p>Mark an existing variable for state transfer. </p>
 <p>This can be used for global variables in 3rd party libraries without modifying its source.</p>
