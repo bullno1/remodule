@@ -117,30 +117,49 @@
 	}; \
 	REMODULE__SECTION_BEGIN \
 	const remodule_var_info_t* const REMODULE__META_PTR_NAME(NAME, NAMESPACE) = &REMODULE__META_NAME(NAME, NAMESPACE); \
-	REMODULE__SECTION_END \
+	REMODULE__SECTION_END(REMODULE__META_PTR_NAME(NAME, NAMESPACE))
+
+//! @cond remodule_internal
+
+#define REMODULE__META_NAME(NAME, NAMESPACE) remodule__##NAMESPACE##_##NAME##_info
+#define REMODULE__META_PTR_NAME(NAME, NAMESPACE) remodule__##NAMESPACE##_##NAME##_info_ptr
+#define REMODULE_STRINGIFY(X) REMODULE_STRINGIFY2(X)
+#define REMODULE_STRINGIFY2(X) #X
 
 #if defined(_MSC_VER)
+// In C++, a const variable is internal and can not be found by /INCLUDE
+#	ifdef __cplusplus
+#		define REMODULE__SLOT_LINKAGE extern "C"
+#	else
+#		define REMODULE__SLOT_LINKAGE
+#	endif
 #	define REMODULE__SECTION_BEGIN \
 	__pragma(data_seg(push)); \
 	__pragma(section("remodule$data", read)); \
-	__declspec(allocate("remodule$data"))
+	REMODULE__SLOT_LINKAGE __declspec(allocate("remodule$data"))
 #elif defined(__APPLE__)
-#	define REMODULE__SECTION_BEGIN __attribute__((used, section("__DATA,remodule")))
+#	define REMODULE__SECTION_BEGIN __attribute__((retain, used, section("__DATA,remodule")))
 #elif defined(__unix__)
-#	define REMODULE__SECTION_BEGIN __attribute__((used, section("remodule")))
+#	define REMODULE__SECTION_BEGIN __attribute__((retain, used, section("remodule")))
 #else
 #	error Unsupported compiler
 #endif
 
 #if defined(_MSC_VER)
-#	define REMODULE__SECTION_END __pragma(data_seg(pop));
+// 32-bit x86 is the only target where C symbols are decorated
+#	if defined(_M_IX86)
+#		define REMODULE__SYMBOL_PREFIX "_"
+#	else
+#		define REMODULE__SYMBOL_PREFIX ""
+#	endif
+#	define REMODULE__SECTION_END(INFO_PTR) \
+	__pragma(data_seg(pop)); \
+	__pragma(comment(linker, "/INCLUDE:" REMODULE__SYMBOL_PREFIX REMODULE_STRINGIFY(INFO_PTR)));
 #elif defined(__APPLE__)
-#	define REMODULE__SECTION_END
+#	define REMODULE__SECTION_END(INFO_PTR)
 #elif defined(__unix__)
-#	define REMODULE__SECTION_END
+#	define REMODULE__SECTION_END(INFO_PTR)
 #endif
-
-//! @cond remodule_internal
 
 typedef struct remodule_var_info_s {
 	const char* name;
@@ -152,9 +171,6 @@ typedef struct remodule_var_info_s {
 #ifndef REMODULE_ASSERT
 #include <stdlib.h>
 #include <stdio.h>
-
-#define REMODULE__META_NAME(NAME, NAMESPACE) remodule__##NAMESPACE##_##NAME##_info
-#define REMODULE__META_PTR_NAME(NAME, NAMESPACE) remodule__##NAMESPACE##_##NAME##_info_ptr
 
 #define REMODULE_ASSERT(COND, MSG) \
 	do { \
@@ -295,10 +311,10 @@ remodule_userdata(remodule_t* mod);
 REMODULE_API void
 remodule_entry(remodule_op_t op, void* userdata);
 
-#ifdef __cplusplus
-}
 #endif
 
+#ifdef __cplusplus
+}
 #endif
 
 #endif
@@ -308,8 +324,6 @@ remodule_entry(remodule_op_t op, void* userdata);
 
 #define REMODULE_INFO_SYMBOL remodule__plugin_info
 #define REMODULE_INFO_SYMBOL_STR REMODULE_STRINGIFY(REMODULE_INFO_SYMBOL)
-#define REMODULE_STRINGIFY(X) REMODULE_STRINGIFY2(X)
-#define REMODULE_STRINGIFY2(X) #X
 
 typedef struct remodule_plugin_info_s {
 	const remodule_var_info_t* const* var_info_begin;
@@ -336,11 +350,11 @@ __declspec(allocate("remodule$end")) extern const remodule_var_info_t* const rem
 #elif defined(__APPLE__)
 extern const remodule_var_info_t* const __start_remodule __asm("section$start$__DATA$remodule");
 extern const remodule_var_info_t* const __stop_remodule __asm("section$end$__DATA$remodule");
-__attribute__((used, section("__DATA,remodule"))) const remodule_var_info_t* const remodule__dummy = NULL;
+__attribute__((retain, used, section("__DATA,remodule"))) const remodule_var_info_t* const remodule__dummy = NULL;
 #elif defined(__unix__)
 extern const remodule_var_info_t* const __start_remodule;
 extern const remodule_var_info_t* const __stop_remodule;
-__attribute__((used, section("remodule"))) const remodule_var_info_t* const remodule__dummy = NULL;
+__attribute__((retain, used, section("remodule"))) const remodule_var_info_t* const remodule__dummy = NULL;
 #endif
 
 #if defined(_MSC_VER)
@@ -674,7 +688,9 @@ remodule_last_error(void) {
 
 #include <dlfcn.h>
 #include <errno.h>
+#if !defined(__APPLE__)
 #include <link.h>
+#endif
 
 #define REMODULE_PATH_MAX PATH_MAX
 
@@ -697,15 +713,28 @@ remodule_dynlib_close(remodule_dynlib_t lib) {
 
 static char*
 remodule_dynlib_get_path(remodule_dynlib_t lib) {
+#if defined(__APPLE__)
+	// There is no dlinfo on macOS.
+	// Find the library through a symbol that every plugin exports instead.
+	Dl_info lib_info;
+	void* symbol = dlsym(lib, REMODULE_INFO_SYMBOL_STR);
+	REMODULE_ASSERT(
+		symbol != NULL && dladdr(symbol, &lib_info) != 0,
+		"Could not read library info"
+	);
+	const char* lib_path = lib_info.dli_fname;
+#else
 	struct link_map* link_map;
 	REMODULE_ASSERT(
 		dlinfo(lib, RTLD_DI_LINKMAP, &link_map) == 0,
 		"Could not read library info"
 	);
+	const char* lib_path = link_map->l_name;
+#endif
 
-	size_t size = strlen(link_map->l_name) + 1;
+	size_t size = strlen(lib_path) + 1;
 	char* path = malloc(size);
-	memcpy(path, link_map->l_name, size);
+	memcpy(path, lib_path, size);
 
 	return path;
 }
